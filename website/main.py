@@ -1,11 +1,8 @@
 from flask import Flask
 from flask import Blueprint, render_template, request
-from mysqlx import Column, Session
 from numpy import NaN, empty
 from views import views
 import os
-import tkinter as tk
-from tkinter import filedialog, simpledialog
 import pandas as pd
 from datetime import datetime
 from datetime import date
