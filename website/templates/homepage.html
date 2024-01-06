@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/button.css') }}">
+    <title>Preferred Equine</title>
+</head>
+<body style="background-color: bisque;">
+
+    <h1 style="text-align:center;color:hsl(5, 65%, 63%); font-weight: bold;">Preferred Equine</h1>
+
+    <!-- Use a hyperlink for redirection -->
+    <a href="/index.html">
+        <button class="button-73" role="button">KEENLAND SALES</button>
+    </a>
+
+
+    {% if message %}
+    <p>{{ message }}</p>
+{% endif %}
+
+{% if data %}
+    <h2>CSV Data</h2>
+    {{ data|safe }}
+{% endif %}
+
+</body>
+    <!-- ***** Footer Start ***** -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12" style="text-align: center;">
+                    <p>
+                        Copyright © 2020 Company Name
+                        - Preferred Equine
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</html>
