@@ -2290,4 +2290,4 @@ def tattersalls():
         return render_template("tattersalls.html", message=f'Error: {str(e)}', data=None)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
