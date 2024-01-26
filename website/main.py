@@ -1,6 +1,5 @@
 from flask import Flask
 from flask import Blueprint, render_template, request
-from mysqlx import Session
 from numpy import NaN, empty
 import numpy as np
 from views import views
