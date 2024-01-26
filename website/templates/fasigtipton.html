@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preferred Equine</title>
+</head>
+<body style="background-color: bisque;">
+
+    <!--<h1 style="text-align:center;color:hsl(5, 65%, 63%); font-weight: bold;">Preferred Equine</h1>-->
+    <h1 style="text-align:center;color:hsl(5, 65%, 63%); font-weight: bold;">Preferred Equine</h1>
+
+    <form style="display: flex; "action="/fasigtipton" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv">
+        <label for="saledate">ENTER SALE CODE:</label>
+        <input type="text" id="salecode" name="salecode" required>
+        <button type="submit">FORMAT</button>
+    </form>
+    {% if message %}
+    <p>{{ message }}</p>
+{% endif %}
+
+{% if data %}
+    <h2>CSV Data</h2>
+    {{ data|safe }}
+{% endif %}
+
+</body>
+</html>
