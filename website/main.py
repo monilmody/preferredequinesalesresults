@@ -1,9 +1,12 @@
 from flask import Flask
 from flask import Blueprint, render_template, request
+from mysqlx import Session
 from numpy import NaN, empty
 import numpy as np
 from views import views
 import os
+import tkinter as tk
+from tkinter import filedialog, simpledialog
 import pandas as pd
 from datetime import datetime
 from datetime import date
@@ -2288,3 +2291,6 @@ def tattersalls():
         # Log the exception or print the error message for debugging
         print(f"Error: {str(e)}")
         return render_template("tattersalls.html", message=f'Error: {str(e)}', data=None)
+
+if __name__ == '__main__':
+    app.run(debug=False)
