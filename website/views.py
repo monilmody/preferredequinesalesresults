@@ -45,3 +45,11 @@ def tattersallsRedirect():
 @views.route("/tattersalls")
 def tattersalls():
     return render_template("tattersalls.html")
+
+@views.route("/arquana_redirect")
+def arquanaRedirect():
+    return render_template("arquana.html")
+
+@views.route("/arquana")
+def arquana():
+    return render_template("arquana.html")
