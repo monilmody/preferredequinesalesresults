@@ -28,14 +28,13 @@ csv_data = pd.DataFrame({})
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "localhost"
-    db_port = 3306
-    db_name = "horse"
-    db_user = "root"
-    db_pass = ""
+    db_name = "dbffqnpcwzmzte"
+    db_user = "uxvkhlgd4e22t"
+    db_pass = "1g:5cl%c3vw*"
     
     try:
         # Create a MySQL engine
-        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
+        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}")
 
         # Create a session factory
         Session = sessionmaker(bind=engine)
