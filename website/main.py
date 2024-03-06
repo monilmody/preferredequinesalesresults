@@ -5,8 +5,8 @@ from views import views
 import pandas as pd
 from datetime import datetime
 from datetime import date
-from sqlalchemy import Column, String, Date, Float, ForeignKey, Integer, create_engine, sessionmaker
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import Column, String, Date, Float, ForeignKey, Integer, create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import time
 from mysql.connector import Error as MySQLError
 
