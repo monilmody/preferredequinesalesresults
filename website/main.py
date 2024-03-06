@@ -9,6 +9,8 @@ from sqlalchemy import Column, String, Date, Float, ForeignKey, Integer, create_
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import time
 from mysql.connector import Error as MySQLError
+import sys
+print(sys.executable)
 
 app = Flask(__name__)
 app.register_blueprint(views, url_prefix="/views")
