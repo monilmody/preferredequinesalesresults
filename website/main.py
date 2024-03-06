@@ -211,7 +211,7 @@ def upload_data_to_mysql(df):
                         tsales.tdamsire = tdamsire
                         session.add(tsales)
 
-                    except MySQLError as e:
+                    except MySQLError | Exception as e:
                         session.rollback()
                         print(f"Error: {str(e)}")
                         retries += 1
@@ -225,7 +225,7 @@ def upload_data_to_mysql(df):
         
         #return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
 
-    except RuntimeError as e:
+    except RuntimeError | Exception as e:
         # Log the exception or print the error message for debugging
         print(f"Error: {str(e)}")
         session.rollback()
