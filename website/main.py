@@ -60,7 +60,7 @@ def upload_data_to_mysql(df):
             BOOK = Column(String(2))
             DAY = Column(Integer)
             HIP = Column(String(6))
-            HIPNUM = Column(String(6)
+            HIPNUM = Column(String(6))
             HORSE = Column(String(35))
             CHORSE = Column(String(35))
             RATING = Column(String(5))
