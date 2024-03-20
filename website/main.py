@@ -622,7 +622,7 @@ def keenland():
         df['DAMTATT'] = damtatt
 
         # Adding a new column DAMYOF
-        damyof = ''
+        damyof = 0
         df['DAMYOF'] = damyof
 
         # Adding a new column DDAMTATT
