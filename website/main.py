@@ -9,6 +9,8 @@ from sqlalchemy import Column, String, Date, Float, ForeignKey, Integer, create_
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import time
 from mysql.connector import Error as MySQLError
+import sys
+print(sys.executable)
 
 app = Flask(__name__)
 app.register_blueprint(views, url_prefix="/views")
@@ -28,8 +30,8 @@ csv_data = pd.DataFrame({})
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "localhost"
-    db_name = "horses"
-    db_user = "root"
+    db_name = "horse"
+    db_user = "admin"
     db_pass = "1234"
     
     try:
@@ -209,7 +211,7 @@ def upload_data_to_mysql(df):
                         tsales.tdamsire = tdamsire
                         session.add(tsales)
 
-                    except MySQLError as e:
+                    except (MySQLError, Exception) as e:
                         session.rollback()
                         print(f"Error: {str(e)}")
                         retries += 1
@@ -223,7 +225,7 @@ def upload_data_to_mysql(df):
         
         #return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
 
-    except RuntimeError as e:
+    except (RuntimeError, Exception) as e:
         # Log the exception or print the error message for debugging
         print(f"Error: {str(e)}")
         session.rollback()
