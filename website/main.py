@@ -1118,7 +1118,8 @@ def fasigTipton():
             'NEW MEXICO': 'NM',
             'MINNESOTA': 'MN',
             'OKLAHOMA': 'OK',
-            'ILLINOIS': 'IL'
+            'ILLINOIS': 'IL',
+            'NEW JERSEY': 'NJ'
         }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
