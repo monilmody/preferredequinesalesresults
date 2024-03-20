@@ -630,8 +630,8 @@ def keenland():
         df['DDAMTATT'] = ddamtatt
 
         # Adding a new column BREDTO
-        if 'ConveringSire' in df.columns:
-            df['BREDTO'] = df['CoveringSire'].fillna("")
+        bredto = df['CoveringSire']
+        df['BREDTO'] = bredto.fillna("")
             
         # Adding a new column LASTBRED
         if 'LastService' in df.columns:
