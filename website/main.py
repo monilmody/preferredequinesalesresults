@@ -1190,10 +1190,9 @@ def fasigTipton():
         if 'CONSIGNOR NAME' in df.columns:
             df.drop(columns=['CONSIGNOR NAME'], inplace=True)
 
-        # Adding a new column LASTBRED
-        lastbred = ''
-        df['LASTBRED'] = lastbred
-
+        lastbred = '1901-01-01'
+        df['LASTBRED'] = pd.to_datetime(lastbred)
+        
         # Adding a new column CONLNAME
         conlname = df['PROPERTY LINE']
         df['CONSLNAME'] = conlname
