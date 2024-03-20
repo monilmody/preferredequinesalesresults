@@ -693,7 +693,7 @@ def keenland():
         df['SBCOUNTRY'] = sbcountry
 
         price_mapping = {
-            '---': ''
+            '---': 0
         }
         # Adding a new column PRICE
         if 'Price' in df.columns:
