@@ -630,12 +630,8 @@ def keenland():
         df['DDAMTATT'] = ddamtatt
 
         # Adding a new column BREDTO
-        if 'Covering Sire' in df.columns:
-            df['BREDTO'] = df['Covering Sire']
-        elif 'ConveringSire' in df.columns:
-            df['BREDTO'] = df['CoveringSire']
-        else:
-            df['BREDTO'] = ''
+        if 'ConveringSire' in df.columns:
+            df['BREDTO'] = df['CoveringSire'].fillna("")
             
         # Adding a new column LASTBRED
         lastbred = '1901-01-01'
@@ -1119,7 +1115,9 @@ def fasigTipton():
             'MINNESOTA': 'MN',
             'OKLAHOMA': 'OK',
             'ILLINOIS': 'IL',
-            'NEW JERSEY': 'NJ'
+            'NEW JERSEY': 'NJ',
+            'ALABAMA': 'AL',
+            
         }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
