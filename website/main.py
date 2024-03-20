@@ -699,7 +699,7 @@ def keenland():
         if 'Price' in df.columns:
             df['PRICE'] = df['Price'].replace(price_mapping)
         else:
-            df['PRICE'] = ''
+            df['PRICE'] = 0.0
 
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
