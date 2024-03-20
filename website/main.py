@@ -73,7 +73,7 @@ def upload_data_to_mysql(df):
             TYPE = Column(String(3))
             RECORD = Column(String(25))
             ET = Column(String(1))
-            ELIG = Column(String(2))
+            ELIG = Column(String(3))
             BREDTO = Column(String(20))
             LASTBRED = Column(Date)
             CONSLNAME = Column(String(60))
@@ -1115,7 +1115,10 @@ def fasigTipton():
             'CALIFORNIA': 'CA',
             'TEXAS': 'TX',
             'IOWA': 'IA',
-            'NEW MEXICO': 'NM'
+            'NEW MEXICO': 'NM',
+            'MINNESOTA': 'MN',
+            'OKLAHOMA': 'OK',
+            'ILLINOIS': 'IL'
         }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
