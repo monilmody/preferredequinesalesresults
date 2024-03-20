@@ -634,9 +634,9 @@ def keenland():
             df['BREDTO'] = df['CoveringSire'].fillna("")
             
         # Adding a new column LASTBRED
-        lastbred = '1901-01-01'
-        df['LASTBRED'] = pd.to_datetime(lastbred)
-
+        if 'LastService' in df.columns:
+            df['LASTBRED'] = pd.to_datetime(df['LastService']).fillna(pd.to_datetime("1901-01-01"))
+            
         # Adding a new column CONLNAME
         if 'Consignor' in df.columns:
             df['CONSLNAME'] = df['Consignor']
