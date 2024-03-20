@@ -108,7 +108,7 @@ def upload_data_to_mysql(df):
             DAMOFDAM = Column(String(50))
             CDAMOFDAM = Column(String(50))
             DAMTATT = Column(String(6))
-            DAMYOF = Column(Integer, nullable=True)
+            DAMYOF = Column(String(50))
             DDAMTATT = Column(String(6))
             tsales = relationship("Tsales", back_populates="tdamsire")
 
