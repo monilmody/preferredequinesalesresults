@@ -638,8 +638,8 @@ def keenland():
             df['BREDTO'] = ''
             
         # Adding a new column LASTBRED
-        lastbred = ''
-        df['LASTBRED'] = lastbred
+        lastbred = '1901-01-01'
+        df['LASTBRED'] = pd.to_datetime(lastbred)
 
         # Adding a new column CONLNAME
         if 'Consignor' in df.columns:
