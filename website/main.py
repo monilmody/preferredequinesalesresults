@@ -1024,16 +1024,12 @@ def fasigTipton():
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
                     # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['HORSE'] = df['NAME']
-        else:
-            df['HORSE'] = ''
+                    df['HORSE'] = df['NAME'].fillna("")
 
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
                     # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['CHORSE'] = df['NAME']
-        else:
-            df['CHORSE'] = ''
+                    df['CHORSE'] = df['NAME'].fillna("")
 
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
