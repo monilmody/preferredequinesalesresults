@@ -909,7 +909,8 @@ def fasigTipton():
         # Iterate through the list of dates
         for i, date_str in enumerate(df['SESSION']):
             # Convert the date string to a datetime object
-            date = datetime.strptime(date_str, '%Y-%m-%d')
+            date1 = datetime.strptime(date_str, '%m/%d/%Y')
+            date = date1.strftime('%Y-%m-%d')
             
             # Check if this is the first date or if the date has changed from the previous one
             if i == 0 or date != prev_date:
