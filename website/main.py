@@ -371,7 +371,7 @@ def keenland():
 
         # Adding a new column SALETYPE
         saletype = 'Y'
-        df['SALETYPE'] = saletype
+        df['SALETYPE'] = request.form['type']
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
