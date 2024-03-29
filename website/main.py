@@ -92,7 +92,7 @@ def upload_data_to_mysql(df):
             BREED = Column(String(2))
             YEARFOAL = Column(Integer)
             DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
-            tdamsire = relationship("Tdamsire", back_populates="tsales")
+            tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the table schema for tdamsire
         class main_Tdamsire(Base):
@@ -110,7 +110,7 @@ def upload_data_to_mysql(df):
             DAMTATT = Column(String(6))
             DAMYOF = Column(Integer, nullable=True, default=0)
             DDAMTATT = Column(String(6))
-            tsales = relationship("Tsales", back_populates="tdamsire")
+            tsales = relationship("main_Tsales", back_populates="tdamsire")
 
 
         # Define tables
