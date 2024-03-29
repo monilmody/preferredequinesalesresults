@@ -961,6 +961,9 @@ def fasigTipton():
         # Dropping a column YEAR OF BIRTH
         if 'YEAR OF BIRTH' in df.columns:
             df.drop(columns=['YEAR OF BIRTH'], inplace=True)
+
+        # Adding a new column YEARFOAL and getting the year from DATEFOAL
+        df['YEARFOAL'] = df['DATEFOAL'].dt.year
         
         # Function to calculate the age from yearfoal and datefoal
         def calculate_age(yearfoal, saleyear):
@@ -1178,9 +1181,6 @@ def fasigTipton():
 
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
-
-        # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['DATEFOAL'].dt.year
 
         # Dropping a column BARN
         df.drop(columns=['BARN'], inplace=True)
