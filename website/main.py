@@ -908,15 +908,27 @@ def fasigTipton():
         # Iterate through the list of dates
         # Iterate through the list of dates
         for i, date_str in enumerate(df['SESSION']):
-            # Convert the date string to a datetime object
             try:
-                date1 = datetime.strptime(date_str, '%m/%d/%Y')
-                date = date1.strftime('%Y-%m-%d')
-
+                # Split the date string into month, day, and year parts
+                month_str, day_str, year_str = date_str.split('/')
+                
+                # Add leading zeros if needed
+                month_str = month_str.zfill(2)
+                day_str = day_str.zfill(2)
+                
+                # Combine the parts back into a formatted date string
+                formatted_date_str = f'{month_str}/{day_str}/{year_str}'
+                
+                # Convert the formatted date string to a datetime object
+                date1 = datetime.strptime(formatted_date_str, '%m/%d/%Y')
+                
+                # Convert the datetime object to the desired format
+                formatted_date_str = date1.strftime('%Y-%m-%d')
+                
                 # Check if this is the first date or if the date has changed from the previous one
-                if i == 0 or date != prev_date:
+                if i == 0 or formatted_date_str != prev_date:
                     counter += 1  # Increment the counter when the date changes
-                    prev_date = date  # Update the previous date
+                    prev_date = formatted_date_str  # Update the previous date
                     
                 counter_values.append(counter)
             except ValueError:
