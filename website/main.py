@@ -937,19 +937,18 @@ def fasigTipton():
         if 'HIP1' in df.columns:
             df.drop(columns=['HIP1'], inplace=True)
 
-
-        # Create a new 'HORSE' column and populate it with 'NAME'
-        default_horse = "No Horse"
-        df['HORSE'] = df['NAME'].fillna(default_horse)
-
-        # Create a new 'CHORSE' column and populate it with 'NAME'
-        default_horse = "No Horse"
-        df['CHORSE'] = df['NAME'].fillna(default_horse)
+        # Check if 'NAME' is a column in the DataFrame
+        if 'NAME' in df.columns:
+            df['HORSE'] = df['NAME'].fillna("")
 
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
-                    # Dropping a column NAME
-                    df.drop(columns=['NAME'], inplace=True)
+            df['CHORSE'] = df['NAME'].fillna("")
+
+        # Check if 'NAME' is a column in the DataFrame
+        if 'NAME' in df.columns:
+            # Dropping a column NAME
+            df.drop(columns=['NAME'], inplace=True)
 
         # Adding a new column RATING
         rating = ''
