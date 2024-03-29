@@ -962,17 +962,17 @@ def fasigTipton():
         # Dropping a column YEAR OF BIRTH
         if 'YEAR OF BIRTH' in df.columns:
             df.drop(columns=['YEAR OF BIRTH'], inplace=True)
-
-        # Function to calculate the age from DATEFOAL
-        def calculate_age(datefoal):
-            today = date.today()
+        
+        # Function to calculate the age from yearfoal and datefoal
+        def calculate_age(yearfoal, datefoal):
+            born_year = pd.to_numeric(yearfoal, errors='coerce')  # Convert to numeric, handle invalid values
             born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
-            age = today.year - born.dt.year - ((today.month * 100 + today.day) < (born.dt.month * 100 + born.dt.day))
+            age = born.dt.year - born_year
             return age
-
-        # Calling the calculate_age() function
-        age = calculate_age(df['DATEFOAL'])
-
+        
+        # Calling the calculate_age() function with yearfoal and datefoal
+        age = calculate_age(df['YEARFOAL'], df['DATEFOAL'])
+        
         # Adding a new column AGE
         df['AGE'] = age
 
