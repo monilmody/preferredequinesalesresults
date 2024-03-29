@@ -939,15 +939,11 @@ def fasigTipton():
 
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
+            # Populate 'HORSE' and 'CHORSE' columns with 'NAME' values and fill missing values with an empty string
             df['HORSE'] = df['NAME'].fillna("")
-
-        # Check if 'NAME' is a column in the DataFrame
-        if 'NAME' in df.columns:
             df['CHORSE'] = df['NAME'].fillna("")
-
-        # Check if 'NAME' is a column in the DataFrame
-        if 'NAME' in df.columns:
-            # Dropping a column NAME
+        
+            # Drop the 'NAME' column
             df.drop(columns=['NAME'], inplace=True)
 
         # Adding a new column RATING
