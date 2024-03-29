@@ -16,6 +16,8 @@
         <input type="text" id="saledate" name="saledate" pattern="\d{4}-\d{2}-\d{2}" required>
         <label for="saledate">ENTER SALE CODE:</label>
         <input type="text" id="salecode" name="salecode" required>
+        <label for="type">ENTER SALETYPE:</label>
+        <input type="text" name="type" id="type" maxlength="1" pattern="[a-zA-Z]" required>
         <button type="submit">FORMAT</button>
     </form>
     {% if message %}
