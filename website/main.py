@@ -937,15 +937,12 @@ def fasigTipton():
         if 'HIP1' in df.columns:
             df.drop(columns=['HIP1'], inplace=True)
 
-        # Check if 'NAME' is a column in the DataFrame
-        if 'NAME' in df.columns:
-                    # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['HORSE'] = df['NAME'].fillna("")
 
-        # Check if 'NAME' is a column in the DataFrame
-        if 'NAME' in df.columns:
-                    # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['CHORSE'] = df['NAME'].fillna("")
+        # Create a new 'HORSE' column and populate it with 'NAME'
+        df['HORSE'] = df['NAME'].fillna("")
+
+        # Create a new 'HORSE' column and populate it with 'NAME'
+        df['CHORSE'] = df['NAME'].fillna("")
 
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
