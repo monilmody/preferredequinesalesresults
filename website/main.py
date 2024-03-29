@@ -966,8 +966,7 @@ def fasigTipton():
         df['SALEYEAR'] = saleyear
 
         # Adding a new column SALETYPE
-        saletype = 'Y'
-        df['SALETYPE'] = saletype
+        df['SALETYPE'] = request.form['type']
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
@@ -1334,8 +1333,7 @@ def goffs():
         df['SALEYEAR'] = request.form['saleyear']
 
         # Adding a new column SALETYPE
-        saletype = 'M'
-        df['SALETYPE'] = saletype
+        df['SALETYPE'] = request.form['type']
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
@@ -1689,8 +1687,7 @@ def obs():
         df['SALEYEAR'] = request.form['saleyear']
 
         # Adding a new column SALETYPE
-        saletype = 'Y'
-        df['SALETYPE'] = saletype
+        df['SALETYPE'] = request.form['type']
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
@@ -2008,8 +2005,7 @@ def tattersalls():
         df['SALEYEAR'] = df['Year']
 
         # Adding a new column SALETYPE
-        saletype = 'Y'
-        df['SALETYPE'] = saletype
+        df['SALETYPE'] = request.form['type']
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
@@ -2325,8 +2321,7 @@ def arquana():
         df['SALEYEAR'] = saleyear
 
         # Adding a new column SALETYPE
-        saletype = 'Y'
-        df['SALETYPE'] = saletype
+        df['SALETYPE'] = request.form['type']
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
