@@ -1330,7 +1330,8 @@ def goffs():
             print("Salecode input canceled.")
 
         # Adding a new column SALEYEAR
-        df['SALEYEAR'] = request.form['saleyear']
+        saleyear = request.form['saleyear']
+        df['SALEYEAR'] = saleyear
 
         # Adding a new column SALETYPE
         df['SALETYPE'] = request.form['type']
@@ -1403,7 +1404,7 @@ def goffs():
         df['TATTOO'] = tattoo
 
         # Adding a new column DATEFOAL
-        datefoal = ''
+        datefoal = df['Year']
         df['DATEFOAL'] = datefoal
 
         # # Dropping a column YEAR OF BIRTH
@@ -1440,17 +1441,19 @@ def goffs():
         gait = ''
         df['GAIT'] = gait
 
-        # # Adding a new column TYPE
-        # if(df['Year'] >= 2022):
-        #     df['TYPE'] = 'Y'
+        condition_covered_by = df['Covering Sire'].notna()
+        # condition_foal = df['Produit'] == 'foal'
+        condition_weanling = datefoal.dt.year == saleyear
+        condition_datefoal = datefoal.dt.year == (saleyear - 1)
+        # Define choices
+        choices = np.select(
+            [condition_covered_by, condition_weanling, condition_datefoal],
+            ['B', 'W', 'Y'],
+            default=''
+        )
 
-        # if (df['Covering Sire'].empty):
-        #     df['TYPE'] = ''
-        # elif(df['Covering Sire'].notnull): 
-        #     df['TYPE'] = 'B'
-
-        # Adding a new column 'TYPE'
-        df['TYPE'] = ''
+        # Assign the result to the 'TYPE' column
+        df['TYPE'] = choices
 
         # Condition 1: If 'Covering Sire' is not null, set 'B'
         df.loc[df['Covering Sire'].notnull(), 'TYPE'] = 'B'
@@ -2002,7 +2005,8 @@ def tattersalls():
             print("Salecode input canceled.")
 
         # Adding a new column SALEYEAR
-        df['SALEYEAR'] = df['Year']
+        saleyear = request.form['saleyear']
+        df['SALEYEAR'] = saleyear
 
         # Adding a new column SALETYPE
         df['SALETYPE'] = request.form['type']
@@ -2107,17 +2111,18 @@ def tattersalls():
         # else:
         #     df['TYPE'] = "RH"
 
-        # Define conditions
+         # Adding a new column TYPE
         condition_covered_by = df['Covered by'].notna()
-        condition_age = (df['AGE'] <= 1)
-
+        # condition_foal = df['Produit'] == 'foal'
+        condition_weanling = df['Year Foaled'] == saleyear
+        condition_datefoal = df['Year Foaled'] == (saleyear - 1)
         # Define choices
         choices = np.select(
-            [condition_covered_by, condition_age],
-            ['B', 'Y'],
-            default='RH'
+            [condition_covered_by, condition_weanling, condition_datefoal],
+            ['B', 'W', 'Y'],
+            default=''
         )
-
+        
         # Assign the result to the 'TYPE' column
         df['TYPE'] = choices
 
@@ -2438,12 +2443,14 @@ def arquana():
         df['GAIT'] = gait
 
         # Adding a new column TYPE
-        condition_covered_by = df['Covered by'].notna()
-        condition_foal = df['Produit'] == 'foal'
+        condition_covered_by = df['Pleine de'].notna()
+        # condition_foal = df['Produit'] == 'foal'
+        condition_weanling = datefoal.dt.year == saleyear
+        condition_datefoal = datefoal.dt.year == (saleyear - 1)
         # Define choices
         choices = np.select(
-            [condition_covered_by, condition_foal],
-            ['B', 'W'],
+            [condition_covered_by, condition_weanling, condition_datefoal],
+            ['B', 'W', 'Y'],
             default=''
         )
 
