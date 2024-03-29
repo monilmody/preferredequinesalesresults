@@ -883,8 +883,7 @@ def fasigTipton():
         df.rename(columns={'DAM': 'DAM1'}, inplace=True)
 
         # Adding a new column SALEYEAR
-        saleyear = 2023
-        df['SALEYEAR'] = saleyear
+        df['SALEYEAR'] = request.form['saleyear']
 
         # Adding a new column SALETYPE
         df['SALETYPE'] = request.form['type']
@@ -964,14 +963,14 @@ def fasigTipton():
             df.drop(columns=['YEAR OF BIRTH'], inplace=True)
         
         # Function to calculate the age from yearfoal and datefoal
-        def calculate_age(yearfoal, datefoal):
+        def calculate_age(yearfoal, saleyear):
             born_year = pd.to_numeric(yearfoal, errors='coerce')  # Convert to numeric, handle invalid values
-            born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
-            age = born.dt.year - born_year
+            sale_year = pd.to_numeric(saleyear, errors='coerce')  # Convert to numeric, handle invalid values
+            age = sale_year - born_year
             return age
         
         # Calling the calculate_age() function with yearfoal and datefoal
-        age = calculate_age(df['YEARFOAL'], df['DATEFOAL'])
+        age = calculate_age(df['YEARFOAL'], df['SALEYEAR'])
         
         # Adding a new column AGE
         df['AGE'] = age
