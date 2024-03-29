@@ -49,7 +49,7 @@ def upload_data_to_mysql(df):
         table_name1 = 'tdamsire'
 
         # Define the table schema for tsales
-        class Tsales(Base):
+        class main_Tsales(Base):
             __tablename__ = 'tsales'
             __table_args__ = {'extend_existing': True}
             SALE_ID = Column(Integer, primary_key=True, autoincrement=True)
@@ -95,7 +95,7 @@ def upload_data_to_mysql(df):
             tdamsire = relationship("Tdamsire", back_populates="tsales")
 
         # Define the table schema for tdamsire
-        class Tdamsire(Base):
+        class main_Tdamsire(Base):
             __tablename__ = 'tdamsire'
             __table_args__ = {'extend_existing': True}
             DAMSIRE_ID = Column(Integer, primary_key=True, autoincrement=True)
@@ -115,99 +115,18 @@ def upload_data_to_mysql(df):
 
          # Define tables
         Base.metadata.create_all(engine)
-
-        # Define the columns you want to insert into each table
-        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL"]
-        columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
-
-        # table_schema = {
-        #     "SALEYEAR": Integer,
-        #     "SALETYPE": String(1),
-        #     "SALECODE": String(20),
-        #     "SALEDATE": Date,
-        #     "BOOK": String(2),
-        #     "DAY": Integer,
-        #     "HIP": String(6),
-        #     "HIPNUM": Integer,
-        #     "HORSE": String(35),
-        #     "CHORSE": String(35),
-        #     "RATING": String(5),
-        #     "TATTOO": String(6),
-        #     "DATEFOAL": Date,
-        #     "AGE": Integer,
-        #     "COLOR": String(5),
-        #     "SEX": String(3),
-        #     "GAIT": String(3),
-        #     "TYPE": String(3),
-        #     "RECORD": String(25),
-        #     "ET": String(1),
-        #     "ELIG": String(2),
-        #     "BREDTO": String(20),
-        #     "LASTBRED": Date,
-        #     "CONSLNAME": String(60),
-        #     "CONSNO": String(20),
-        #     "PEMCODE": String(15),
-        #     "PURFNAME": String(30),
-        #     "PURLNAME": String(70),
-        #     "SBCITY": String(25),
-        #     "SBSTATE": String(10),
-        #     "SBCOUNTRY": String(15),
-        #     "PRICE": Float,
-        #     "CURRENCY": String(3),
-        #     "URL": String(150),
-        #     "NFFM": String(2),
-        #     "PRIVATESALE": String(2),
-        #     "BREED": String(2),
-        #     "YEARFOAL": Integer
-        # }
-
-        # table_schema1 = {
-        #     "SIRE": String(50),
-        #     "CSIRE": String(50),
-        #     "DAM": String(50),
-        #     "CDAM": String(50),
-        #     "SIREOFDAM": String(50),
-        #     "CSIREOFDAM": String(50),
-        #     "DAMOFDAM": String(50),
-        #     "CDAMOFDAM": String(50),
-        #     "DAMTATT": String(6),
-        #     "DAMYOF": Integer,
-        #     "DDAMTATT": String(6)
-        # }
-
-        # Retry logic for connection issues
-                # chunk_size = 1000  # Adjust the chunk size based on your data size
-                # for i in range(0, len(df), chunk_size):
-                #     df_chunk = df[i:i + chunk_size]
-                #     # df_chunk.to_sql(table_name1, con=engine, if_exists='append', index=False, dtype=table_schema1)
-                #     # df_chunk.to_sql(table_name, con=engine, if_exists='append', index=False, dtype=table_schema)
-
-                #     # Extract only the desired columns for tsales
-                #     df_chunk_tsales = df_chunk[columns_for_tsales]
-
-                #     # Exclude auto-incremented column DAMSIRE_ID
-                #     columns_to_ignore = ["DAMSIRE_ID", "SALE_ID"]
-                #     columns_to_insert = [col for col in df_chunk_tsales.columns if col not in columns_to_ignore]
-                #     df_chunk_tsales[columns_to_insert].to_sql(table_name, con=engine, if_exists='append', index=False, dtype=table_schema)
-
-                #     # Extract only the desired columns for tdamsire
-                #     df_chunk_tdamsire = df_chunk[columns_for_tdamsire]
-
-                #     # Exclude auto-incremented column DAMSIRE_ID
-                #     columns_to_ignore = ["DAMSIRE_ID"]
-                #     columns_to_insert1 = [col for col in df_chunk_tdamsire.columns if col not in columns_to_ignore]
-                #     df_chunk_tdamsire[columns_to_insert1].to_sql(table_name1, con=engine, if_exists='append', index=False, dtype=table_schema1)
+        
         for _, row in df.iterrows():
                     try:
                         # Insert into tdamsire first
                         tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
-                        tdamsire = Tdamsire(**tdamsire_data)
+                        tdamsire = main_Tdamsire(**tdamsire_data)
                         session.add(tdamsire)
 
                         # Use the generated DAMSIRE_ID in tsales
                         tsales_data = {col: row[col] for col in columns_for_tsales}
                         #tsales_data['DAMSIRE_ID'] = tdamsire.DAMSIRE_ID
-                        tsales = Tsales(**tsales_data)
+                        tsales = main_Tsales(**tsales_data)
                         tsales.tdamsire = tdamsire
                         session.add(tsales)
 
