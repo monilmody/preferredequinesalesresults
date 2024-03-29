@@ -939,15 +939,10 @@ def fasigTipton():
 
 
         # Create a new 'HORSE' column and populate it with 'NAME'
-        df['HORSE'] = df['NAME'].fillna("")
+        df['HORSE'] = ""
 
         # Create a new 'HORSE' column and populate it with 'NAME'
-        df['CHORSE'] = df['NAME'].fillna("")
-
-        # Check if 'NAME' is a column in the DataFrame
-        if 'NAME' in df.columns:
-                    # Dropping a column NAME
-                    df.drop(columns=['NAME'], inplace=True)
+        df['CHORSE'] = ""
 
         # Adding a new column RATING
         rating = ''
