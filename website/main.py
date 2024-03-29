@@ -113,9 +113,13 @@ def upload_data_to_mysql(df):
             tsales = relationship("Tsales", back_populates="tdamsire")
 
 
-         # Define tables
+        # Define tables
         Base.metadata.create_all(engine)
-        
+
+        # Define the columns you want to insert into each table
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL"]
+        columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
+
         for _, row in df.iterrows():
                     try:
                         # Insert into tdamsire first
