@@ -906,17 +906,21 @@ def fasigTipton():
         counter_values = []
 
         # Iterate through the list of dates
+        # Iterate through the list of dates
         for i, date_str in enumerate(df['SESSION']):
             # Convert the date string to a datetime object
-            date1 = datetime.strptime(date_str, '%m/%d/%Y')
-            date = date1.strftime('%Y-%m-%d')
-            
-            # Check if this is the first date or if the date has changed from the previous one
-            if i == 0 or date != prev_date:
-                counter += 1  # Increment the counter when the date changes
-                prev_date = date  # Update the previous date
-                
-            counter_values.append(counter)
+            try:
+                date1 = datetime.strptime(date_str, '%m/%d/%Y')
+                date = date1.strftime('%Y-%m-%d')
+
+                # Check if this is the first date or if the date has changed from the previous one
+                if i == 0 or date != prev_date:
+                    counter += 1  # Increment the counter when the date changes
+                    prev_date = date  # Update the previous date
+                    
+                counter_values.append(counter)
+            except ValueError:
+                print(f"Invalid date format or value at index {i}: {date_str}")
 
         # Adding a new column DAY
         df['DAY'] = counter_values
