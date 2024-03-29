@@ -568,11 +568,9 @@ def keenland():
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
         if 'Elig' in df.columns:
-            df['ELIG'] = df['Elig']
-        else:
-            df['ELIG'] = ''
+            df['ELIG'] = df['Elig'].fillna("")
 
-        if 'Area_Foaled' in df.columns:
+        if 'Elig' in df.columns:
             df.drop(columns=['Elig'], inplace=True)
 
         # Adding a new column SIRE
