@@ -92,7 +92,7 @@ def upload_data_to_mysql(df):
             BREED = Column(String(2))
             YEARFOAL = Column(Integer)
             DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
-            tdamsire = relationship("main_Tdamsire", back_populates="tsales")
+            # tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the table schema for tdamsire
         class main_Tdamsire(Base):
@@ -110,11 +110,14 @@ def upload_data_to_mysql(df):
             DAMTATT = Column(String(6))
             DAMYOF = Column(Integer, nullable=True, default=0)
             DDAMTATT = Column(String(6))
-            tsales = relationship("main_Tsales", back_populates="tdamsire")
+            # tsales = relationship("main_Tsales", back_populates="tdamsire")
 
 
         # Define tables
         Base.metadata.create_all(engine)
+
+        # Define the relationship after both classes have been defined
+        main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the columns you want to insert into each table
         columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL"]
