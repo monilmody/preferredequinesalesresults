@@ -513,19 +513,15 @@ def keenland():
 
         # Adding a new column SIREOFDAM
         if 'Broodmare Sire' in df.columns:
-            df['SIREOFDAM'] = df['Broodmare Sire']
+            df['SIREOFDAM'] = df['Broodmare Sire'].fillna("")
         elif 'Sire Of Dam' in df.columns:
-            df['SIREOFDAM'] = df['Sire Of Dam']
-        else: 
-            df['SIREOFDAM'] = ''
+            df['SIREOFDAM'] = df['Sire Of Dam'].fillna("")
 
         # Adding a new column CSIREOFDAM
         if 'Broodmare Sire' in df.columns:
-            df['CSIREOFDAM'] = df['Broodmare Sire']
+            df['CSIREOFDAM'] = df['Broodmare Sire'].fillna("")
         elif 'Sire Of Dam' in df.columns:
-            df['CSIREOFDAM'] = df['Sire Of Dam']
-        else: 
-            df['CSIREOFDAM'] = ''
+            df['CSIREOFDAM'] = df['Sire Of Dam'].fillna("")
 
         # Dropping columns Broodmare Sire and Sire Of Dam
         if 'Broodmare Sire' in df.columns:
