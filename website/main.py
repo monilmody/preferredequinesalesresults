@@ -110,7 +110,7 @@ def upload_data_to_mysql(df):
             DAMTATT = Column(String(6))
             DAMYOF = Column(Integer, nullable=True, default=0)
             DDAMTATT = Column(String(6))
-            # tsales = relationship("main_Tsales", back_populates="tdamsire")
+            tsales = relationship("main_Tsales", back_populates="tdamsire")
 
 
         # Define tables
