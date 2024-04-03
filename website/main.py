@@ -923,21 +923,24 @@ def fasigTipton():
         counter_values = []
 
         # Iterate through the list of dates
-        # Iterate through the list of dates
         for i, date_str in enumerate(df['SESSION']):
             try:
-                # Split the date string into month, day, and year parts
-                month_str, day_str, year_str = date_str.split('/')
-                
-                # Add leading zeros if needed
-                month_str = month_str.zfill(2)
-                day_str = day_str.zfill(2)
-                
-                # Combine the parts back into a formatted date string
-                formatted_date_str = f'{month_str}/{day_str}/{year_str}'
+                if '/' in date_str:
+                    # Split the date string into month, day, and year parts
+                    month_str, day_str, year_str = date_str.split('/')
+                    
+                    # Add leading zeros if needed
+                    month_str = month_str.zfill(2)
+                    day_str = day_str.zfill(2)
+                    
+                    # Combine the parts back into a formatted date string
+                    formatted_date_str = f'{year_str}-{month_str}-{day_str}'
+                else:
+                    # The date string is already in the desired format
+                    formatted_date_str = date_str
                 
                 # Convert the formatted date string to a datetime object
-                date1 = datetime.strptime(formatted_date_str, '%m/%d/%Y')
+                date1 = datetime.strptime(formatted_date_str, '%Y-%m-%d')
                 
                 # Convert the datetime object to the desired format
                 formatted_date_str = date1.strftime('%Y-%m-%d')
