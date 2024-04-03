@@ -331,7 +331,8 @@ def keenland():
         # # Adding a new column DAY
         # if 'SALEDATE' in df.columns:
         df['DAY'] = df['Session']
-
+        
+        # Function to update sale dates based on user input
         def update_sale_dates(df, sale_dates_input):
             sale_dates = [date.strip() for date in sale_dates_input.split(',')]
             # Convert the sale dates to datetime objects
@@ -341,7 +342,7 @@ def keenland():
                 for j, day in enumerate(df['DAY']):
                     if not pd.isnull(day):
                         if day == day_increment:
-                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%m/%d/%Y')
+                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%Y-%m-%d')
 
         # Get sale dates from user input
         sale_dates_input = request.form['sale_dates']
