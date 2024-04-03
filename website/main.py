@@ -246,21 +246,21 @@ def keenland():
         else:
             print("Salecode input canceled.")
 
-        while True:
-            # Get user input for SALE date
-            saledate = request.form['saledate']
+        # while True:
+        #     # Get user input for SALE date
+        #     saledate = request.form['saledate']
 
-            # Check if the user provided a date or canceled the dialog
-            if saledate is not None:
-                try:
-                    # Try to parse the input as a valid date
-                    saledate = pd.to_datetime(saledate)
-                    break  # Exit the loop if parsing is successful
-                except ValueError:
-                    print("Invalid date format. Please enter a valid date (YYYY-MM-DD).")
-            else:
-                print("saledate input canceled.")
-                break  # Exit the loop if the user cancels the dialog
+        #     # Check if the user provided a date or canceled the dialog
+        #     if saledate is not None:
+        #         try:
+        #             # Try to parse the input as a valid date
+        #             saledate = pd.to_datetime(saledate)
+        #             break  # Exit the loop if parsing is successful
+        #         except ValueError:
+        #             print("Invalid date format. Please enter a valid date (YYYY-MM-DD).")
+        #     else:
+        #         print("saledate input canceled.")
+        #         break  # Exit the loop if the user cancels the dialog
 
         saleyear = request.form['saleyear']
 
@@ -303,7 +303,7 @@ def keenland():
         df['SALECODE'] = salecode
 
 
-        df['SALEDATE'] = pd.to_datetime(saledate)
+        # df['SALEDATE'] = pd.to_datetime(saledate)
 
         # # Initialize a counter
         # counter = 0
@@ -332,6 +332,23 @@ def keenland():
         # if 'SALEDATE' in df.columns:
         df['DAY'] = df['Session']
 
+        def update_sale_dates(df, sale_dates_input):
+            sale_dates = [date.strip() for date in sale_dates_input.split(',')]
+            # Convert the sale dates to datetime objects
+            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d') for date in sale_dates]
+            for i, sale_date_obj in enumerate(sale_date_objects):
+                day_increment = i + 1  # Increment the day by the index (starting from 1)
+                for j, day in enumerate(df['DAY']):
+                    if not pd.isnull(day):
+                        if day == day_increment:
+                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%m/%d/%Y')
+
+        # Get sale dates from user input
+        sale_dates_input = request.form['sale_dates']
+
+        # Update sale dates
+        update_sale_dates(df, sale_dates_input)
+        
         # # Initialize a counter
         # counter = 0
 
