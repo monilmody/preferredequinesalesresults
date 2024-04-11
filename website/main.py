@@ -686,7 +686,7 @@ def keenland():
 
         pragnancy_mapping = {
             'PRAGNANCY' : 'P',
-            'NOT PRAGNANT' : 'NP',
+            'NOT PRAGNANT' : 'B',
             'NOT MATED' : 'NM'
         }
 
