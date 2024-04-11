@@ -682,7 +682,7 @@ def keenland():
         else:
             df['YEARFOAL'] = df.fillna(['0000'])
 
-        df['UTT'] = df['utt'].fillna("")
+        df['UTT'] = df['utt'].fillna(0.0)
 
         pragnancy_mapping = {
             'PRAGNANCY' : 'P',
@@ -1232,7 +1232,7 @@ def fasigTipton():
         breed = 'T'
         df['BREED'] = breed
 
-        df['UTT'] = df['utt'].fillna("")
+        df['UTT'] = df['utt'].fillna(0.0)
 
         df['STATUS'] = ""
 
@@ -1608,7 +1608,7 @@ def goffs():
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['Year']
 
-        df['UTT'] = ""
+        df['UTT'] = 0.0
         df['STATUS'] = ""
         # Dropping a column BARN
         df.drop(columns=['Year'], inplace=True)
@@ -1937,7 +1937,7 @@ def obs():
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna("")
 
-        df['UTT'] = ""
+        df['UTT'] = 0.0
         df['STATUS'] = ""
 
         upload_data_to_mysql(df)
@@ -2257,7 +2257,7 @@ def obsmixed():
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna("")
 
-        df['UTT'] = df['ut_time'].fillna("")
+        df['UTT'] = df['ut_time'].fillna(0.0)
 
         df['STATUS'] = ""
         upload_data_to_mysql(df)
@@ -2568,7 +2568,7 @@ def tattersalls():
         breed = 'T'
         df['BREED'] = breed
 
-        df['UTT'] = ""
+        df['UTT'] = 0.0
         df['STATUS'] = ""
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
@@ -2913,7 +2913,7 @@ def arquana():
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['DATEFOAL'].dt.year
 
-        df['UTT'] = ""
+        df['UTT'] = 0.0
         df['STATUS'] = ""
 
         upload_data_to_mysql(df)
