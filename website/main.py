@@ -30,9 +30,9 @@ csv_data = pd.DataFrame({})
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "localhost"
-    db_name = "horse"
-    db_user = "admin"
-    db_pass = "1234"
+    db_name = "horses"
+    db_user = "root"
+    db_pass = ""
     
     try:
         # Create a MySQL engine
@@ -91,6 +91,8 @@ def upload_data_to_mysql(df):
             PRIVATESALE = Column(String(2))
             BREED = Column(String(2))
             YEARFOAL = Column(Integer)
+            UTT = Column(String(255))
+            STATUS = Column(String(255))
             DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
             # tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
@@ -120,7 +122,7 @@ def upload_data_to_mysql(df):
         main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the columns you want to insert into each table
-        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL"]
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS"]
         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
         for _, row in df.iterrows():
@@ -178,6 +180,10 @@ def goffsRedirect():
 @app.route('/obs_redirect')
 def obsRedirect():
     return render_template('obs.html')
+
+@app.route("/obs_redirect-mixed")
+def obsRedirectMix():
+    return render_template("obs.html")
 
 @app.route('/tattersalls_redirect')
 def tattersallsRedirect():
@@ -676,6 +682,17 @@ def keenland():
         else:
             df['YEARFOAL'] = df.fillna(['0000'])
 
+        df['UTT'] = df['utt'].fillna("")
+
+        pragnancy_mapping = {
+            'PRAGNANCY' : 'P',
+            'NOT PRAGNANT' : 'NP',
+            'NOT MATED' : 'NM'
+        }
+
+        df['STATUS'] = df['Pregnancy'].replace(pragnancy_mapping).fillna("")
+
+        df.drop(columns=['utt'], inplace=True)
         # Dropping a column BARN
         # df.drop(columns=['BARN'], inplace=True)
 
@@ -1215,6 +1232,10 @@ def fasigTipton():
         breed = 'T'
         df['BREED'] = breed
 
+        df['UTT'] = df['utt'].fillna("")
+
+        df['STATUS'] = ""
+
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
 
@@ -1587,6 +1608,8 @@ def goffs():
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['Year']
 
+        df['UTT'] = ""
+        df['STATUS'] = ""
         # Dropping a column BARN
         df.drop(columns=['Year'], inplace=True)
 
@@ -1914,6 +1937,9 @@ def obs():
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna("")
 
+        df['UTT'] = ""
+        df['STATUS'] = ""
+
         upload_data_to_mysql(df)
 
         return render_template("obs.html", message='File uploaded to database successfully', data=df.to_html())
@@ -1923,6 +1949,325 @@ def obs():
         print(f"Error: {str(e)}")
         return render_template("obs.html", message=f'Error: {str(e)}', data=None)
 
+@app.route('/obs-mixed', methods=['POST'])
+
+def obsmixed():
+    
+    global csv_data
+    try:
+        if 'file' not in request.files:
+            return render_template('obs.html', message='No file path')
+        file_path = request.files['file']
+
+        if file_path.filename == '':
+            return render_template('obs.html', message='No selected file')
+        
+        # Read the selected Excel file into a DataFrame
+        df = pd.read_excel(file_path)
+
+        # Prompt the user to insert the salecode using a dialog
+        salecode = request.form['salecode']
+
+        # Check if the user provided a salecode or canceled the dialog
+        if salecode is not None:
+
+            # Now you can work with the DataFrame 'df' and 'salecode' as needed
+
+            # For example, you can print the first few rows and the salecode:
+            #print(df.head())
+            salecode
+
+        else:
+            print("Salecode input canceled.")
+
+        # Adding a new column SALEYEAR
+        df['SALEYEAR'] = request.form['saleyear']
+
+        # Adding a new column SALETYPE
+        df['SALETYPE'] = request.form['type']
+
+        # Adding a new column SALECODE
+        df['SALECODE'] = salecode
+
+        # Adding a new column SALEDATE
+        df['SALEDATE'] = request.form['saledate']
+
+        # Adding a new column BOOK
+        book = 1
+        df['BOOK'] = book
+
+        # # Initialize a counter
+        # counter = 0
+
+        # # Initialize a list to store the counter values
+        # counter_values = []
+
+        # # Iterate through the list of dates
+        # for i, date_str in enumerate(request.form['saledate']):
+        #     # Convert the date string to a datetime object
+        #     date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+
+        #     # Check if this is the first date or if the date has changed from the previous one
+        #     if i == 0 or date != prev_date:
+        #         counter += 1  # Increment the counter when the date changes
+        #         prev_date = date  # Update the previous date
+                
+        #     counter_values.append(counter)
+
+        # Adding a new column DAY
+        day = 1
+        df['DAY'] = day
+
+        # Adding a new column HIP
+        df['HIP'] = df['Hip']
+
+        # Adding a new column HIPNUM
+        df['HIPNUM'] = df['Hip']
+
+        # Dropping a column HIP1
+        df.drop(columns=['Hip'], inplace=True)
+
+        # Check if 'NAME' is a column in the DataFrame
+        if 'Name' in df.columns:
+                    # Create a new 'HORSE' column and populate it with 'NAME'
+                    df['HORSE'] = df['Name'].fillna("")
+        else:
+            df['HORSE'] = ''
+
+        # Check if 'NAME' is a column in the DataFrame
+        if 'Name' in df.columns:
+                    # Create a new 'HORSE' column and populate it with 'NAME'
+                    df['CHORSE'] = df['Name'].fillna("")
+        else:
+            df['CHORSE'] = ''
+
+        # Check if 'NAME' is a column in the DataFrame
+        if 'Name' in df.columns:
+                    # Dropping a column NAME
+                    df.drop(columns=['Name'], inplace=True)
+
+        # Adding a new column RATING
+        rating = ''
+        df['RATING'] = rating
+
+        # Adding a new column TATTOO
+        tattoo = ''
+        df['TATTOO'] = tattoo
+
+        # Adding a new column DATEFOAL
+        df['DATEFOAL'] = pd.to_datetime(df['Foaling Date'])
+
+        # Dropping a column Foaling Date
+        df.drop(columns=['Foaling Date'], inplace=True)
+
+        # Function to calculate the age from DATEFOAL
+        def calculate_age(datefoal):
+            today = date.today()
+            born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
+            age = today.year - born.dt.year - ((today.month * 100 + today.day) < (born.dt.month * 100 + born.dt.day))
+            return age
+
+        # Calling the calculate_age() function
+        age = calculate_age(df['DATEFOAL'])
+
+        # Adding a new column AGE
+        df['AGE'] = age.fillna("")
+
+        # Adding a new column COLOR
+        if 'Color' in df.columns:
+            df['COLOR'] = df['Color'].fillna("")
+
+        # Dropping a column COLOR1
+        if 'Color' in df.columns:
+            df.drop(columns=['Color'], inplace=True)
+
+        # Adding a new column SEX
+        if 'Sex' in df.columns:
+            df['SEX'] = df['Sex'].fillna("")
+
+        # Dropping a column SEX1
+        if 'Sex' in df.columns:
+            df.drop(columns=['Sex'], inplace=True)
+
+        # Adding a new column GAIT
+        gait = ''
+        df['GAIT'] = gait
+
+        # Adding a new column TYPE
+        if 'SOLD AS CODE' in df.columns:
+            df['TYPE'] = df['SOLD AS CODE']
+        else: 
+            df['TYPE'] = 'Y'
+
+        # Adding a new column RECORD
+        record = ''
+        df['RECORD'] = record
+
+        # Adding a new column ET
+        et = ''
+        df['ET'] = et
+
+        # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
+        df['ELIG'] = df['State'].fillna("")
+
+        df.drop(columns=['State'], inplace=True)
+
+        # Adding a new column SIRE
+        if 'Sire' in df.columns:
+            df['SIRE'] =  df['Sire'].fillna("")
+
+        # Adding a new column CSIRE
+        if 'Sire' in df.columns:
+            df['CSIRE'] = df['Sire'].fillna("")
+
+        # Dropping a column SIRE1
+        if 'Sire' in df.columns:
+            df.drop(columns=['Sire'], inplace=True)
+
+        # Adding a new column DAM
+        if 'Dam' in df.columns:
+            df['DAM'] = df['Dam'].fillna("")
+
+        # Adding a new column CDAM
+        if 'Dam' in df.columns:
+            df['CDAM'] = df['Dam'].fillna("")
+
+        # Dropping a column DAM1
+        if 'Dam' in df.columns:
+            df.drop(columns=['Dam'], inplace=True)
+
+        # Adding a new column SIREOFDAM
+        if 'Damsire' in df.columns:
+            df['SIREOFDAM'] = df['Damsire'].fillna("")
+
+        # Adding a new column CSIREOFDAM
+        if 'Damsire' in df.columns:
+            df['CSIREOFDAM'] = df['Damsire'].fillna("")
+
+        # Dropping a column SIRE OF DAM
+        if 'Damsire' in df.columns:
+            df.drop(columns=['Damsire'], inplace=True)
+
+        df.drop(columns=['Sort by Dam'], inplace=True)
+        df.drop(columns=['Status'], inplace=True)
+        df.drop(columns=['Out date'], inplace=True)
+        df.drop(columns=['Alpha Sort'], inplace=True)
+
+        # Adding a new column DAMOFDAM
+        damofdam = ''
+        df['DAMOFDAM'] = damofdam
+
+        # Adding a new column CDAMOFDAM
+        cdamofdam = ''
+        df['CDAMOFDAM'] = cdamofdam
+
+        # Adding a new column DAMTATT
+        damtatt = ''
+        df['DAMTATT'] = damtatt
+
+        # Adding a new column DAMYOF
+        damyof = ''
+        df['DAMYOF'] = damyof
+
+        # Adding a new column DDAMTATT
+        ddamtatt = ''
+        df['DDAMTATT'] = ddamtatt
+
+        # Adding a new column BREDTO
+        bredto = ""
+        df['BREDTO'] = bredto
+
+        # Adding a new column LASTBRED
+        lastbred = ''
+        df['LASTBRED'] = lastbred
+
+        # Adding a new column CONLNAME
+        conlname = df['Consignor']
+        df['CONSLNAME'] = conlname.fillna("")
+
+        # Dropping a column PROPERTY LINE
+        df.drop(columns=['Consignor'], inplace=True)
+
+        # Adding a new column CONSNO
+        consno = ''
+        df['CONSNO'] = consno
+
+        # Adding a new column PEMCODE
+        pemcode = ''
+        df['PEMCODE'] = pemcode
+
+        # Adding a new column PURFNAME
+        purfname = ''
+        df['PURFNAME'] = purfname
+
+        df.drop(columns=['Barn'], inplace=True)
+
+        # Adding a new column PURLNAME
+        purlname = df['Buyer']
+        df['PURLNAME'] = purlname
+
+        # Dropping a column PURCHASER
+        df.drop(columns=['Buyer'], inplace=True)
+
+        # Adding a new column SBCITY
+        sbcity = ''
+        df['SBCITY'] = sbcity
+
+        # Adding a new column SBSTATE
+        sbstate = ''
+        df['SBSTATE'] = sbstate
+
+        # Adding a new column SBCOUNTRY
+        sbcountry = ''
+        df['SBCOUNTRY'] = sbcountry
+
+        # Adding a new column PRICE
+        price = df['Price']
+        df['PRICE'] = price
+
+        # Adding a new column PRICE1
+        df.drop(columns=['Price'], inplace=True)
+
+        # Adding a new column CURRENCY
+        currency = ''
+        df['CURRENCY'] = currency
+
+        # Adding a new column URL
+        
+        url = ""
+        df['URL'] = url
+
+        # Adding a new column NFFM
+        nffm = ''
+        df['NFFM'] = nffm
+
+        # Adding a new column PRIVATE SALE
+        privatesale = df['PS']
+        df['PRIVATESALE'] = privatesale.fillna("")
+
+        df.drop(columns=['PS'], inplace=True)
+      
+        # Adding a new column BREED
+        breed = 'T'
+        df['BREED'] = breed
+
+        # Calculating the year of birth from the datefoal
+        datefoal_series = df['DATEFOAL']
+
+        # Adding a new column YEARFOAL and getting the year from DATEFOAL
+        df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna("")
+
+        df['UTT'] = df['ut_time'].fillna("")
+
+        df['STATUS'] = ""
+        upload_data_to_mysql(df)
+
+        return render_template("obs.html", message='File uploaded to database successfully', data=df.to_html())
+
+    except Exception as e:
+        # Log the exception or print the error message for debugging
+        print(f"Error: {str(e)}")
+        return render_template("obs.html", message=f'Error: {str(e)}', data=None)
 
 @app.route('/tattersalls', methods=['POST'])
 
@@ -2223,6 +2568,8 @@ def tattersalls():
         breed = 'T'
         df['BREED'] = breed
 
+        df['UTT'] = ""
+        df['STATUS'] = ""
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
 
@@ -2565,6 +2912,9 @@ def arquana():
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['YEARFOAL'] = df['DATEFOAL'].dt.year
+
+        df['UTT'] = ""
+        df['STATUS'] = ""
 
         upload_data_to_mysql(df)
 
