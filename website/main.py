@@ -1766,17 +1766,19 @@ def obs():
         # Dropping a column Foaling Date
         df.drop(columns=['foaling_date'], inplace=True)
 
-        # Function to calculate the age from DATEFOAL
-        def calculate_age(datefoal, sale_dates):
-            # Convert datefoal and sale_dates to datetime
-            born = pd.to_datetime(datefoal, errors='coerce')
-            sale_dates = pd.to_datetime(sale_dates, errors='coerce')
-            # Calculate age as the difference between sale_dates and datefoal in years
-            age = ((sale_dates - born).dt.days // 365) + 1
+        # Calculating the year of birth from the datefoal
+        datefoal_series = df['DATEFOAL']
+
+        # Adding a new column YEARFOAL and getting the year from DATEFOAL
+        df['YEARFOAL'] = datefoal_series.dt.year.fillna("")
+
+        def calculate_age(yearfoal, saleyear):
+            # Calculate age as the difference between sale year and foaling year, plus 1
+            age = saleyear - yearfoal
             return age
 
         # Calling the calculate_age() function
-        age = calculate_age(df['DATEFOAL'], df['SALEDATE'])
+        age = calculate_age(df['YEARFOAL'], df['SALEYEAR'])
 
         # Adding a new column AGE
         df['AGE'] = age.fillna("")
@@ -1960,12 +1962,6 @@ def obs():
         # Adding a new column BREED
         breed = 'T'
         df['BREED'] = breed
-
-        # Calculating the year of birth from the datefoal
-        datefoal_series = df['DATEFOAL']
-
-        # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = datefoal_series.dt.year.fillna("")
 
         df.drop(columns=['foaling_year'], inplace=True)
 
