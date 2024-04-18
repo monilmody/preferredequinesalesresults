@@ -1969,7 +1969,11 @@ def obs():
 
         df.drop(columns=['foaling_year'], inplace=True)
 
-        df['UTT'] = df['ut_time'].fillna(0.0)
+        utt_mapping = {
+            'G': 0.0
+        }
+
+        df['UTT'] = df['ut_time'].replace(utt_mapping).fillna(0.0)
         
         df.drop(columns=['ut_time'], inplace=True)
 
