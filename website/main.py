@@ -1930,8 +1930,16 @@ def obs():
         df['SBCOUNTRY'] = sbcountry
 
         # Adding a new column PRICE
-        price = df['hammer_price']
-        df['PRICE'] = price.fillna("")
+        # Convert empty values to None
+        df['PRICE'] = df['hammer_price'].apply(lambda x: x if isinstance(x, str) and x.strip() else None)
+
+        # Now, when inserting into the database, ensure that None values are handled appropriately
+        # For example, if 'PRICE' is supposed to be a float type, you can use the coerce parameter in pd.to_numeric to convert None values to NaN
+        df['PRICE'] = pd.to_numeric(df['PRICE'], errors='coerce')
+
+        # Since the database expects double type, ensure that NaN values are replaced with None
+        # This is to avoid potential issues when inserting NaN values into a double column
+        df['PRICE'] = df['PRICE'].where(df['PRICE'].notna(), None)
 
         # Adding a new column PRICE1
         df.drop(columns=['hammer_price'], inplace=True)
