@@ -30,9 +30,9 @@ csv_data = pd.DataFrame({})
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "localhost"
-    db_name = "horse"
-    db_user = "admin"
-    db_pass = "1234"
+    db_name = "horses"
+    db_user = "root"
+    db_pass = ""
     
     try:
         # Create a MySQL engine
@@ -1663,6 +1663,8 @@ def obs():
         # Adding a new column SALEYEAR
         df['SALEYEAR'] = request.form['saleyear']
 
+        df['SALEYEAR'] = df['SALEYEAR'].astype(int)
+
         # Adding a new column SALETYPE
         df['SALETYPE'] = request.form['type']
 
@@ -1770,7 +1772,7 @@ def obs():
         datefoal_series = df['DATEFOAL']
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = datefoal_series.dt.year.fillna("")
+        df['YEARFOAL'] = datefoal_series.dt.year.fillna(1901)
 
         def calculate_age(yearfoal, saleyear):
             # Calculate age as the difference between sale year and foaling year, plus 1
@@ -1781,7 +1783,7 @@ def obs():
         age = calculate_age(df['YEARFOAL'], df['SALEYEAR'])
 
         # Adding a new column AGE
-        df['AGE'] = age.fillna("")
+        df['AGE'] = age.fillna(0)
 
         # Adding a new column COLOR
         if 'color' in df.columns:
