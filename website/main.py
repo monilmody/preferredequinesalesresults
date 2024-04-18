@@ -1643,7 +1643,7 @@ def obs():
             return render_template('obs.html', message='No selected file')
         
         # Read the selected Excel file into a DataFrame
-        df = pd.read_excel(file_path)
+        df = pd.read_csv(file_path)
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -1669,9 +1669,6 @@ def obs():
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
 
-        # Adding a new column SALEDATE
-        df['SALEDATE'] = request.form['saledate']
-
         # Adding a new column BOOK
         book = 1
         df['BOOK'] = book
@@ -1694,34 +1691,41 @@ def obs():
                 
         #     counter_values.append(counter)
 
-        # Adding a new column DAY
-
-        df['DAY']
-
-        # Function to update sale dates and corresponding day column based on user input
-        def update_sale_dates(df, sale_dates_input):
-            sale_dates = [date.strip() for date in sale_dates_input.split(',')]
-            # Convert the sale dates to datetime objects
-            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d') for date in sale_dates]
-            for i, sale_date_obj in enumerate(sale_date_objects):
-                for j, sale_date in enumerate(df['SALEDATE']):
-                    if not pd.isnull(sale_date):
-                        if sale_date_obj.strftime('%Y-%m-%d') == sale_date:
-                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%Y-%m-%d')
-                            df.at[j, 'DAY'] = i + 1  # Update DAY column based on the index
-
-        # Get sale dates from user input
-        sale_dates_input = request.form['sale_dates']
-
-        # Update sale dates and corresponding day column
-        update_sale_dates(df, sale_dates_input)
-
-
         # Adding a new column HIP
         df['HIP'] = df['hip_number']
 
         # Adding a new column HIPNUM
         df['HIPNUM'] = df['hip_number']
+
+        # Function to update sale dates and corresponding day column based on user input
+        def update_sale_dates(df, sale_dates_input, hip_ranges_input):
+            sale_dates = [date.strip() for date in sale_dates_input.split(',')]
+            hip_ranges = [range.strip() for range in hip_ranges_input.split(',')]
+            
+            # Convert the sale dates to datetime objects
+            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d').date() for date in sale_dates]
+            
+            # Initialize a dictionary to store hip ranges and corresponding sale dates and days
+            hip_range_data = {}
+            for i, hip_range in enumerate(hip_ranges):
+                start, end = map(int, hip_range.split('-'))
+                for hip_number in range(start, end + 1):
+                    hip_range_data[hip_number] = {'sale_date': sale_date_objects[i], 'day': i + 1}
+            
+            # Initialize DAY column to 0
+            df['DAY'] = 0
+            
+            # Update SALEDATE and DAY columns
+            for hip_number, data in hip_range_data.items():
+                df.loc[df['hip_number'] == hip_number, 'SALEDATE'] = data['sale_date']
+                df.loc[df['hip_number'] == hip_number, 'DAY'] = data['day']
+
+        # Get sale dates from user input
+        sale_dates_input = request.form['sale_dates']
+        hip_ranges_input = request.form['hip_ranges']
+
+        # Update sale dates and corresponding day column
+        update_sale_dates(df, sale_dates_input, hip_ranges_input)
 
         # Dropping a column hip_number
         df.drop(columns=['hip_number'], inplace=True)
@@ -1763,14 +1767,16 @@ def obs():
         df.drop(columns=['foaling_date'], inplace=True)
 
         # Function to calculate the age from DATEFOAL
-        def calculate_age(datefoal):
-            today = date.today()
-            born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
-            age = today.year - born.dt.year - ((today.month * 100 + today.day) < (born.dt.month * 100 + born.dt.day))
+        def calculate_age(datefoal, sale_dates):
+            # Convert datefoal and sale_dates to datetime
+            born = pd.to_datetime(datefoal, errors='coerce')
+            sale_dates = pd.to_datetime(sale_dates, errors='coerce')
+            # Calculate age as the difference between sale_dates and datefoal in years
+            age = (sale_dates - born).dt.days // 365
             return age
 
         # Calling the calculate_age() function
-        age = calculate_age(df['DATEFOAL'])
+        age = calculate_age(df['DATEFOAL'], df['SALEDATE'])
 
         # Adding a new column AGE
         df['AGE'] = age.fillna("")
@@ -1873,8 +1879,11 @@ def obs():
         df['DDAMTATT'] = ddamtatt
 
         # Adding a new column BREDTO
-        bredto = ""
-        df['BREDTO'] = bredto
+        bredto = df['bredto']
+        df['BREDTO'] = bredto.fillna("")
+
+        # Dropping a column PROPERTY LINE
+        df.drop(columns=['bredto'], inplace=True)
 
         # Adding a new column LASTBRED
         lastbred = ''
@@ -1922,7 +1931,7 @@ def obs():
 
         # Adding a new column PRICE
         price = df['hammer_price']
-        df['PRICE'] = price
+        df['PRICE'] = price.fillna("")
 
         # Adding a new column PRICE1
         df.drop(columns=['hammer_price'], inplace=True)
@@ -1956,7 +1965,7 @@ def obs():
         datefoal_series = df['DATEFOAL']
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['foaling_year'].dt.year.fillna("")
+        df['YEARFOAL'] = datefoal_series.dt.year.fillna("")
 
         df.drop(columns=['foaling_year'], inplace=True)
 
@@ -1969,7 +1978,6 @@ def obs():
         df.drop(columns=['ut_distance'], inplace=True)
         df.drop(columns=['ut_actual_date'], inplace=True)
         df.drop(columns=['ut_group'], inplace=True)
-        df.drop(columns=['ut_set'], inplace=True)
         df.drop(columns=['ut_set'], inplace=True)
 
         upload_data_to_mysql(df)

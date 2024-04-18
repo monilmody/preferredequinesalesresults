@@ -14,8 +14,10 @@
 
     <form style="display: flex; "action="/obs" method="post" enctype="multipart/form-data">
         <input type="file" name="file" accept=".csv">
-        <label for="saledate">ENTER SALE DATE (YYYY-MM-DD):</label>
-        <input type="text" id="saledate" name="saledate" pattern="\d{4}-\d{2}-\d{2}" required>
+        <label for="sale_dates">Enter Sale Dates (YYYY-MM-DD, separated by comma):</label>
+        <input type="text" id="sale_dates" name="sale_dates" required>
+        <label for="hip_ranges">Enter Hip Ranges:</label>
+        <input type="text" id="hip_ranges" name="hip_ranges" placeholder="1-100, 101-200, 201-300">
         <label for="saleyear">ENTER SALE YEAR (YYYY):</label>
         <input type="text" id="saleyear" name="saleyear" pattern="\d{4}" required>
         <label for="saledate">ENTER SALE CODE:</label>
@@ -24,6 +26,7 @@
         <input type="text" name="type" id="type" maxlength="1" pattern="[a-zA-Z]" required>
         <button type="submit">FORMAT</button>
     </form>
+    <p>Need to add columns 'bredto' in the excel file</p>
     {% if message %}
     <p>{{ message }}</p>
 {% endif %}
