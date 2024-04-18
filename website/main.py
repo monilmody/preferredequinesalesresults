@@ -1983,6 +1983,8 @@ def obs():
         df.drop(columns=['ut_actual_date'], inplace=True)
         df.drop(columns=['ut_group'], inplace=True)
         df.drop(columns=['ut_set'], inplace=True)
+        df.drop(columns=['lastbred'], inplace=True)
+        df.drop(columns=['horsetype'], inplace=True)
 
         upload_data_to_mysql(df)
 
