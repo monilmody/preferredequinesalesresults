@@ -1886,8 +1886,8 @@ def obs():
         df.drop(columns=['bredto'], inplace=True)
 
         # Adding a new column LASTBRED
-        lastbred = ''
-        df['LASTBRED'] = lastbred
+        lastbred = '1901-01-01'
+        df['LASTBRED'] = pd.to_datetime(lastbred)
 
         # Adding a new column CONLNAME
         conlname = df['property_line_1']
