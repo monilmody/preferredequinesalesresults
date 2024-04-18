@@ -1695,36 +1695,58 @@ def obs():
         #     counter_values.append(counter)
 
         # Adding a new column DAY
-        day = 1
-        df['DAY'] = day
+
+        df['DAY']
+
+        # Function to update sale dates and corresponding day column based on user input
+        def update_sale_dates(df, sale_dates_input):
+            sale_dates = [date.strip() for date in sale_dates_input.split(',')]
+            # Convert the sale dates to datetime objects
+            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d') for date in sale_dates]
+            for i, sale_date_obj in enumerate(sale_date_objects):
+                for j, sale_date in enumerate(df['SALEDATE']):
+                    if not pd.isnull(sale_date):
+                        if sale_date_obj.strftime('%Y-%m-%d') == sale_date:
+                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%Y-%m-%d')
+                            df.at[j, 'DAY'] = i + 1  # Update DAY column based on the index
+
+        # Get sale dates from user input
+        sale_dates_input = request.form['sale_dates']
+
+        # Update sale dates and corresponding day column
+        update_sale_dates(df, sale_dates_input)
+
 
         # Adding a new column HIP
-        df['HIP'] = df['Hip']
+        df['HIP'] = df['hip_number']
 
         # Adding a new column HIPNUM
-        df['HIPNUM'] = df['Hip']
+        df['HIPNUM'] = df['hip_number']
 
-        # Dropping a column HIP1
-        df.drop(columns=['Hip'], inplace=True)
+        # Dropping a column hip_number
+        df.drop(columns=['hip_number'], inplace=True)
+
+        # Dropping a column in_out_status
+        df.drop(columns=['in_out_status'], inplace=True)
 
         # Check if 'NAME' is a column in the DataFrame
-        if 'Name' in df.columns:
+        if 'horse_name' in df.columns:
                     # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['HORSE'] = df['Name'].fillna("")
+                    df['HORSE'] = df['horse_name'].fillna("")
         else:
             df['HORSE'] = ''
 
         # Check if 'NAME' is a column in the DataFrame
-        if 'Name' in df.columns:
+        if 'horse_name' in df.columns:
                     # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['CHORSE'] = df['Name'].fillna("")
+                    df['CHORSE'] = df['horse_name'].fillna("")
         else:
             df['CHORSE'] = ''
 
         # Check if 'NAME' is a column in the DataFrame
-        if 'Name' in df.columns:
+        if 'horse_name' in df.columns:
                     # Dropping a column NAME
-                    df.drop(columns=['Name'], inplace=True)
+                    df.drop(columns=['horse_name'], inplace=True)
 
         # Adding a new column RATING
         rating = ''
@@ -1735,10 +1757,10 @@ def obs():
         df['TATTOO'] = tattoo
 
         # Adding a new column DATEFOAL
-        df['DATEFOAL'] = pd.to_datetime(df['Foaling Date'])
+        df['DATEFOAL'] = pd.to_datetime(df['foaling_date'])
 
         # Dropping a column Foaling Date
-        df.drop(columns=['Foaling Date'], inplace=True)
+        df.drop(columns=['foaling_date'], inplace=True)
 
         # Function to calculate the age from DATEFOAL
         def calculate_age(datefoal):
@@ -1754,30 +1776,27 @@ def obs():
         df['AGE'] = age.fillna("")
 
         # Adding a new column COLOR
-        if 'Color' in df.columns:
-            df['COLOR'] = df['Color'].fillna("")
+        if 'color' in df.columns:
+            df['COLOR'] = df['color'].fillna("")
 
         # Dropping a column COLOR1
-        if 'Color' in df.columns:
-            df.drop(columns=['Color'], inplace=True)
+        if 'color' in df.columns:
+            df.drop(columns=['color'], inplace=True)
 
         # Adding a new column SEX
-        if 'Sex' in df.columns:
-            df['SEX'] = df['Sex'].fillna("")
+        if 'sex' in df.columns:
+            df['SEX'] = df['sex'].fillna("")
 
         # Dropping a column SEX1
-        if 'Sex' in df.columns:
-            df.drop(columns=['Sex'], inplace=True)
+        if 'sex' in df.columns:
+            df.drop(columns=['sex'], inplace=True)
 
         # Adding a new column GAIT
         gait = ''
         df['GAIT'] = gait
 
         # Adding a new column TYPE
-        if 'SOLD AS CODE' in df.columns:
-            df['TYPE'] = df['SOLD AS CODE']
-        else: 
-            df['TYPE'] = 'Y'
+        df['TYPE'] = 'Y'
 
         # Adding a new column RECORD
         record = ''
@@ -1788,50 +1807,50 @@ def obs():
         df['ET'] = et
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
-        df['ELIG'] = df['State'].fillna("")
+        df['ELIG'] = df['foaling_area'].fillna("")
 
-        df.drop(columns=['State'], inplace=True)
+        df.drop(columns=['foaling_area'], inplace=True)
 
         # Adding a new column SIRE
-        if 'Sire' in df.columns:
-            df['SIRE'] =  df['Sire'].fillna("")
+        if 'sire_name' in df.columns:
+            df['SIRE'] =  df['sire_name'].fillna("")
 
         # Adding a new column CSIRE
-        if 'Sire' in df.columns:
-            df['CSIRE'] = df['Sire'].fillna("")
+        if 'sire_name' in df.columns:
+            df['CSIRE'] = df['sire_name'].fillna("")
 
         # Dropping a column SIRE1
-        if 'Sire' in df.columns:
-            df.drop(columns=['Sire'], inplace=True)
+        if 'sire_name' in df.columns:
+            df.drop(columns=['sire_name'], inplace=True)
 
         # Adding a new column DAM
-        if 'Dam' in df.columns:
-            df['DAM'] = df['Dam'].fillna("")
+        if 'dam_name' in df.columns:
+            df['DAM'] = df['dam_name'].fillna("")
 
         # Adding a new column CDAM
-        if 'Dam' in df.columns:
-            df['CDAM'] = df['Dam'].fillna("")
+        if 'dam_name' in df.columns:
+            df['CDAM'] = df['dam_name'].fillna("")
 
         # Dropping a column DAM1
-        if 'Dam' in df.columns:
-            df.drop(columns=['Dam'], inplace=True)
+        if 'dam_name' in df.columns:
+            df.drop(columns=['dam_name'], inplace=True)
 
         # Adding a new column SIREOFDAM
-        if 'Damsire' in df.columns:
-            df['SIREOFDAM'] = df['Damsire'].fillna("")
+        if 'dam_sire' in df.columns:
+            df['SIREOFDAM'] = df['dam_sire'].fillna("")
 
         # Adding a new column CSIREOFDAM
-        if 'Damsire' in df.columns:
-            df['CSIREOFDAM'] = df['Damsire'].fillna("")
+        if 'dam_sire' in df.columns:
+            df['CSIREOFDAM'] = df['dam_sire'].fillna("")
 
         # Dropping a column SIRE OF DAM
-        if 'Damsire' in df.columns:
-            df.drop(columns=['Damsire'], inplace=True)
+        if 'dam_sire' in df.columns:
+            df.drop(columns=['dam_sire'], inplace=True)
 
-        df.drop(columns=['Sort by Dam'], inplace=True)
-        df.drop(columns=['Status'], inplace=True)
-        df.drop(columns=['Out date'], inplace=True)
-        df.drop(columns=['Alpha Sort'], inplace=True)
+        df.drop(columns=['sort_dam'], inplace=True)
+        df.drop(columns=['property_line_2'], inplace=True)
+        df.drop(columns=['consignor_sort'], inplace=True)
+        df.drop(columns=['outdate'], inplace=True)
 
         # Adding a new column DAMOFDAM
         damofdam = ''
@@ -1862,11 +1881,11 @@ def obs():
         df['LASTBRED'] = lastbred
 
         # Adding a new column CONLNAME
-        conlname = df['Consignor']
+        conlname = df['property_line_1']
         df['CONSLNAME'] = conlname.fillna("")
 
         # Dropping a column PROPERTY LINE
-        df.drop(columns=['Consignor'], inplace=True)
+        df.drop(columns=['property_line_1'], inplace=True)
 
         # Adding a new column CONSNO
         consno = ''
@@ -1880,14 +1899,14 @@ def obs():
         purfname = ''
         df['PURFNAME'] = purfname
 
-        df.drop(columns=['Barn'], inplace=True)
+        df.drop(columns=['barn_number'], inplace=True)
 
         # Adding a new column PURLNAME
-        purlname = df['Buyer']
+        purlname = df['buyer_name']
         df['PURLNAME'] = purlname
 
         # Dropping a column PURCHASER
-        df.drop(columns=['Buyer'], inplace=True)
+        df.drop(columns=['buyer_name'], inplace=True)
 
         # Adding a new column SBCITY
         sbcity = ''
@@ -1902,11 +1921,11 @@ def obs():
         df['SBCOUNTRY'] = sbcountry
 
         # Adding a new column PRICE
-        price = df['Price']
+        price = df['hammer_price']
         df['PRICE'] = price
 
         # Adding a new column PRICE1
-        df.drop(columns=['Price'], inplace=True)
+        df.drop(columns=['hammer_price'], inplace=True)
 
         # Adding a new column CURRENCY
         currency = ''
@@ -1914,18 +1933,20 @@ def obs():
 
         # Adding a new column URL
         
-        url = ""
-        df['URL'] = url
+        url = df['pp_pdf_link']
+        df['URL'] = url.fillna("")
+
+        df.drop(columns=['pp_pdf_link'], inplace=True)
 
         # Adding a new column NFFM
         nffm = ''
         df['NFFM'] = nffm
 
         # Adding a new column PRIVATE SALE
-        privatesale = df['PS']
+        privatesale = df['post_sale_indicator']
         df['PRIVATESALE'] = privatesale.fillna("")
 
-        df.drop(columns=['PS'], inplace=True)
+        df.drop(columns=['post_sale_indicator'], inplace=True)
       
         # Adding a new column BREED
         breed = 'T'
@@ -1935,10 +1956,21 @@ def obs():
         datefoal_series = df['DATEFOAL']
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna("")
+        df['YEARFOAL'] = df['foaling_year'].dt.year.fillna("")
 
-        df['UTT'] = 0.0
+        df.drop(columns=['foaling_year'], inplace=True)
+
+        df['UTT'] = df['ut_time'].fillna("")
+        
+        df.drop(columns=['ut_time'], inplace=True)
+
         df['STATUS'] = ""
+
+        df.drop(columns=['ut_distance'], inplace=True)
+        df.drop(columns=['ut_actual_date'], inplace=True)
+        df.drop(columns=['ut_group'], inplace=True)
+        df.drop(columns=['ut_set'], inplace=True)
+        df.drop(columns=['ut_set'], inplace=True)
 
         upload_data_to_mysql(df)
 
