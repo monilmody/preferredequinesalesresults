@@ -1772,7 +1772,7 @@ def obs():
             born = pd.to_datetime(datefoal, errors='coerce')
             sale_dates = pd.to_datetime(sale_dates, errors='coerce')
             # Calculate age as the difference between sale_dates and datefoal in years
-            age = (sale_dates - born).dt.days // 365
+            age = ((sale_dates - born).dt.days // 365) + 1
             return age
 
         # Calling the calculate_age() function
@@ -1802,7 +1802,7 @@ def obs():
         df['GAIT'] = gait
 
         # Adding a new column TYPE
-        df['TYPE'] = 'Y'
+        df['TYPE'] = df['horsetype'].fillna("")
 
         # Adding a new column RECORD
         record = ''
@@ -1886,8 +1886,8 @@ def obs():
         df.drop(columns=['bredto'], inplace=True)
 
         # Adding a new column LASTBRED
-        lastbred = '1901-01-01'
-        df['LASTBRED'] = pd.to_datetime(lastbred)
+        lastbred = df['lastbred'] 
+        df['LASTBRED'] = lastbred.fillna(pd.to_datetime('1901-01-01'))
 
         # Adding a new column CONLNAME
         conlname = df['property_line_1']
