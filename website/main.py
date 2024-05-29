@@ -676,11 +676,17 @@ def keenland():
         breed = 'T'
         df['BREED'] = breed
 
-        # Adding a new column YEARFOAL and getting the year from DATEFOAL
+        # Assuming df is your DataFrame
         if 'DOB' in df.columns:
+            # Extracting year from DATEFOAL
             df['YEARFOAL'] = df['DATEFOAL'].dt.year
+            # If 'yearfoal' input from HTML has values, prioritize it over DATEFOAL
+            if 'yearfoal' in request.form and request.form['yearfoal']:
+                yearfoal_value = request.form['yearfoal']
+                df['YEARFOAL'] = yearfoal_value
         else:
-            df['YEARFOAL'] = df.fillna(['0000'])
+            # If 'DOB' is not in df, fill YEARFOAL with '0000'
+            df['YEARFOAL'] = df.fillna(0000)
 
         df['UTT'] = df['utt'].fillna(0.0)
 
