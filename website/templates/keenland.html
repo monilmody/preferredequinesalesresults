@@ -1,37 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preferred Equine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5e6d3;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        h1 a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #c0392b;
+        }
+
+        p {
+            text-align: center;
+            color: #555;
+        }
+
+        .message {
+            text-align: center;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .csv-data {
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
-<body style="background-color: bisque;">
 
-     <h1 style="text-align:center;color:hsl(5, 65%, 63%); font-weight: bold;">
-        <a href="/" style="text-decoration: none; color: inherit;">Preferred Equine</a>
-    </h1>
+<body>
+    <div class="container">
+        <h1><a href="/">Preferred Equine</a></h1>
 
-    <form action="/keenland" method="post" enctype="multipart/form-data" style="width: device_width;">
-        <input type="file" name="file" accept=".csv">
-        <label for="sale_dates">Enter Sale Dates (YYYY-MM-DD, separated by comma):</label>
-        <input type="text" id="sale_dates" name="sale_dates" required>
-        <label for="saleyear">ENTER SALE YEAR (YYYY):</label>
-        <input type="text" id="saleyear" name="saleyear" pattern="\d{4}" required>
-        <label for="salecode">ENTER SALE CODE:</label>
-        <input type="text" id="salecode" name="salecode" required>
-        <label for="type">ENTER SALETYPE:</label>
-        <input type="text" name="type" id="type" maxlength="1" pattern="[a-zA-Z]" required>
-        <button type="submit">FORMAT</button>
-    </form>
-    <p>Need to add columns Elig, Sire Of Dam, utt in the excel file</p>
-    {% if message %}
-    <p>{{ message }}</p>
-{% endif %}
+        <form action="/keenland" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".csv" required>
+            <label for="sale_dates">Enter Sale Dates (YYYY-MM-DD, separated by comma):</label>
+            <input type="text" id="sale_dates" name="sale_dates" required>
+            <label for="saleyear">Enter Sale Year (YYYY):</label>
+            <input type="text" id="saleyear" name="saleyear" pattern="\d{4}" required>
+            <label for="salecode">Enter Sale Code:</label>
+            <input type="text" id="salecode" name="salecode" required>
+            <label for="type">Enter Sale Type:</label>
+            <input type="text" name="type" id="type" maxlength="1" pattern="[a-zA-Z]" required>
+            <button type="submit">Format</button>
+        </form>
 
-{% if data %}
-    <h2>CSV Data</h2>
-    {{ data|safe }}
-{% endif %}
+        <p>Need to add columns Elig, Sire Of Dam, utt in the excel file</p>
 
+        {% if message %}
+        <p class="message">{{ message }}</p>
+        {% endif %}
+
+        {% if data %}
+        <div class="csv-data">
+            <h2>CSV Data</h2>
+            {{ data|safe }}
+        </div>
+        {% endif %}
+    </div>
 </body>
+
 </html>
