@@ -30,9 +30,9 @@ csv_data = pd.DataFrame({})
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "localhost"
-    db_name = "horse"
-    db_user = "admin"
-    db_pass = "1234"
+    db_name = "horses"
+    db_user = "root"
+    db_pass = ""
     
     try:
         # Create a MySQL engine
@@ -93,6 +93,7 @@ def upload_data_to_mysql(df):
             YEARFOAL = Column(Integer)
             UTT = Column(String(255))
             STATUS = Column(String(255))
+            TDAM = Column(String(255))
             DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
             # tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
@@ -122,7 +123,7 @@ def upload_data_to_mysql(df):
         main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the columns you want to insert into each table
-        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS"]
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM"]
         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
         for _, row in df.iterrows():
@@ -697,6 +698,9 @@ def keenland():
         }
 
         df['STATUS'] = df['Pregnancy'].replace(pragnancy_mapping).fillna("")
+
+        # Adding a new column DAM
+        df['TDAM'] = df['Dam']
 
         df.drop(columns=['utt'], inplace=True)
         # Dropping a column BARN
