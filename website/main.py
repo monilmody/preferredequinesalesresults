@@ -1123,10 +1123,6 @@ def fasigTipton():
         if 'DAM1' in df.columns:
             df['CDAM'] = df['DAM1']
 
-        # Dropping a column DAM1
-        if 'DAM1' in df.columns:
-            df.drop(columns=['DAM1'], inplace=True)
-
         # Adding a new column SIREOFDAM
         if 'SIRE OF DAM' in df.columns:
             df['SIREOFDAM'] = df['SIRE OF DAM']
@@ -1244,7 +1240,19 @@ def fasigTipton():
 
         df['UTT'] = df['utt'].fillna(0.0)
 
+        df.drop(columns=['utt'], inplace=True)
+
         df['STATUS'] = ""
+
+        df['TDAM'] = df['DAM1']
+
+                # Dropping a column DAM1
+        if 'DAM1' in df.columns:
+            df.drop(columns=['DAM1'], inplace=True)
+
+        df['url-ut'] = df['url ut']
+
+        df.drop(columns=['url ut'], inplace=True)
 
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
