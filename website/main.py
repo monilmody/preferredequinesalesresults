@@ -16,9 +16,9 @@ app = Flask(__name__)
 app.register_blueprint(views, url_prefix="/views")
 
 # # MySQL database connection
-# db_user = 'your_username'
+# db_user = 'preferredequine'
 # db_password = ''
-# db_host = 'localhost'
+# db_host = '172.31.44.125'
 # db_port = 3306
 # db_name = 'horse'
 
@@ -29,9 +29,9 @@ csv_data = pd.DataFrame({})
 
 def upload_data_to_mysql(df):
     global csv_data
-    db_host = "localhost"
+    db_host = "172.31.44.125"
     db_name = "horse"
-    db_user = "admin"
+    db_user = "preferredequine"
     db_pass = "1234"
     
     try:
