@@ -1048,8 +1048,8 @@ def fasigTipton():
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
             # Populate 'HORSE' and 'CHORSE' columns with 'NAME' values and fill missing values with an empty string
-            df['HORSE'] = df['NAME'].fillna("")
-            df['CHORSE'] = df['NAME'].fillna("")
+            df['HORSE'] = df['NAME'].fillna("No Horse").replace('', 'No Horse')
+            df['CHORSE'] = df['NAME'].fillna("No Horse").replace('', 'No Horse')
         
             # Drop the 'NAME' column
             df.drop(columns=['NAME'], inplace=True)
@@ -1176,10 +1176,6 @@ def fasigTipton():
         if 'SIRE OF DAM' in df.columns:
             df['CSIREOFDAM'] = df['SIRE OF DAM']
 
-        # Dropping a column SIRE OF DAM
-        if 'SIRE OF DAM' in df.columns:
-            df.drop(columns=['SIRE OF DAM'], inplace=True)
-
         # Adding a new column DAMOFDAM
         damofdam = ''
         df['DAMOFDAM'] = damofdam
@@ -1290,10 +1286,21 @@ def fasigTipton():
         df['STATUS'] = ""
 
         df['TDAM'] = df['DAM1']
+        
+        df['tSire'] = df['SIRE1']
 
-                # Dropping a column DAM1
+        df['tSireofdam'] = df['SIRE OF DAM']
+        
+        if 'SIRE1' in df.columns:
+            df.drop(columns=['SIRE1'], inplace=True)
+
+        # Dropping a column DAM1
         if 'DAM1' in df.columns:
             df.drop(columns=['DAM1'], inplace=True)
+
+        # Dropping a column SIRE OF DAM
+        if 'SIRE OF DAM' in df.columns:
+            df.drop(columns=['SIRE OF DAM'], inplace=True)
 
         df['url-ut'] = df['url ut']
 
