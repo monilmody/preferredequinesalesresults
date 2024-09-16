@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import time
 from mysql.connector import Error as MySQLError
 import sys
+import re
 print(sys.executable)
 
 app = Flask(__name__)
@@ -630,13 +631,27 @@ def keenland():
         df['SBCOUNTRY'] = sbcountry
 
         price_mapping = {
-            '---': 0
+            '---': pd.NA
         }
         # Adding a new column PRICE
         if 'Price' in df.columns:
             df['PRICE'] = df['Price'].replace(price_mapping)
         else:
             df['PRICE'] = 0
+
+        rna_price = None
+
+        for i, row in df.iterrows():
+            if isinstance(row['PRICE'], str) and 'R.N.A.' in row['Purchaser']:
+                # Extract the price from R.N.A. entry
+                match = re.search(r'\(([^)]+)\)', row['Purchaser'])
+                if match:
+                    rna_price = int(match.group(1).replace(',', ''))
+                # Set PRICE to NaN for R.N.A. rows
+                df.at[i, 'PRICE'] = pd.NA
+            elif row['PRICE'] == 0 and rna_price is not None:
+                # Populate 'PRICE' for 'Out' entries based on the last R.N.A. price
+                df.at[i, 'PRICE'] = rna_price
 
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
