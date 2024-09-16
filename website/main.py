@@ -982,7 +982,11 @@ def fasigTipton():
 
         # Adding a new column SALEDATE
         if 'SESSION' in df.columns:
-            df['SALEDATE'] = df['SESSION']
+            # Convert 'SESSION' to datetime with the original format
+            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y')
+            
+            # Format 'SALEDATE' to 'YYYY-MM-DD' for MySQL compatibility
+            df['SALEDATE'] = df['SALEDATE'].dt.strftime('%Y-%m-%d')
 
         # Adding a new column BOOK
         book = 1
