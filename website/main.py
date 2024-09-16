@@ -653,10 +653,14 @@ def keenland():
                 # Extract the price from R.N.A. entry
                 match = re.search(r'\(([^)]+)\)', row['Purchaser'])
                 if match:
-                    rna_price = float(match.group(1).replace(',', ''))
-                    print(f"Extracted R.N.A. price: {rna_price} from row {i}")
+                    try:
+                        rna_price = float(match.group(1).replace(',', ''))
+                        print(f"Extracted R.N.A. price: {rna_price} from row {i}")
+                    except ValueError:
+                        print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
+                        rna_price = None
                 else:
-                    print(f"Failed to extract R.N.A. price from: {row['Purchaser']}")
+                    print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
                 # Set PRICE to np.nan for R.N.A. rows
                 df.at[i, 'PRICE'] = np.nan
             elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
