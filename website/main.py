@@ -550,12 +550,6 @@ def keenland():
         elif 'Sire Of Dam' in df.columns:
             df['CSIREOFDAM'] = df['Sire Of Dam'].fillna("")
 
-        # Dropping columns Broodmare Sire and Sire Of Dam
-        if 'Broodmare Sire' in df.columns:
-            df.drop(columns=['Broodmare Sire'], inplace=True)
-        elif 'Sire Of Dam' in df.columns:
-            df.drop(columns=['Sire Of Dam'], inplace=True)
-
         # Adding a new column DAMOFDAM
         damofdam = ''
         df['DAMOFDAM'] = damofdam
@@ -710,6 +704,13 @@ def keenland():
         # Adding a new column SIREOFDAM
         df['tSireofdam'] = df['Sire Of Dam']
 
+        
+        # Dropping columns Broodmare Sire and Sire Of Dam
+        if 'Broodmare Sire' in df.columns:
+            df.drop(columns=['Broodmare Sire'], inplace=True)
+        elif 'Sire Of Dam' in df.columns:
+            df.drop(columns=['Sire Of Dam'], inplace=True)
+            
         df.drop(columns=['utt'], inplace=True)
         # Dropping a column BARN
         # df.drop(columns=['BARN'], inplace=True)
