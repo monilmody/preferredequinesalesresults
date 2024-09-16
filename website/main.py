@@ -638,19 +638,19 @@ def keenland():
 
         rna_price = None
 
-            # Process each row
-    for i, row in df.iterrows():
-        if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
-            # Extract the price from R.N.A. entry
-            match = re.search(r'\(([^)]+)\)', row['Purchaser'])
-            if match:
-                rna_price = int(match.group(1).replace(',', ''))
-            # Set PRICE to pd.NA for R.N.A. rows
-            df.at[i, 'PRICE'] = pd.NA
-        elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
-            # Populate 'PRICE' for missing entries based on the last R.N.A. price
-            if rna_price is not None:
-                df.at[i, 'PRICE'] = rna_price
+        # Process each row
+        for i, row in df.iterrows():
+            if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
+                # Extract the price from R.N.A. entry
+                match = re.search(r'\(([^)]+)\)', row['Purchaser'])
+                if match:
+                    rna_price = int(match.group(1).replace(',', ''))
+                # Set PRICE to pd.NA for R.N.A. rows
+                df.at[i, 'PRICE'] = pd.NA
+            elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
+                # Populate 'PRICE' for missing entries based on the last R.N.A. price
+                if rna_price is not None:
+                    df.at[i, 'PRICE'] = rna_price
 
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
