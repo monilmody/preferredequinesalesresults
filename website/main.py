@@ -627,27 +627,27 @@ def keenland():
 
 
         def process_prices(df):
+            # Ensure df is a valid DataFrame
             if df is None or not isinstance(df, pd.DataFrame):
                 raise ValueError("Input is not a valid DataFrame.")
             
-            # Ensure 'Price' column is treated as integer where possible
-            def parse_price(value):
-                try:
-                    return int(value)
-                except (ValueError, TypeError):
-                    return np.nan
-
-            # Replace '---' with np.nan and convert 'Price' to numeric values
-            df['Price'] = df['Price'].replace('---', np.nan).apply(parse_price)
-
-            # Add a new column PRICE based on 'Price'
-            df['PRICE'] = df['Price']
-
-            rna_price = None
-
             # Print initial DataFrame for debugging
             print("Initial DataFrame:")
             print(df.head())
+
+            # Define the mapping for R.N.A.
+            price_mapping = {
+                '---': np.nan
+            }
+            
+            # Replace '---' with np.nan in 'Price' and convert to float
+            if 'Price' in df.columns:
+                df['Price'] = df['Price'].replace(price_mapping)
+                df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')  # Convert to float
+            else:
+                df['PRICE'] = np.nan
+            
+            rna_price = None
 
             # Process each row
             for i, row in df.iterrows():
@@ -655,7 +655,7 @@ def keenland():
                     # Extract the price from R.N.A. entry
                     match = re.search(r'\(([^)]+)\)', row['Purchaser'])
                     if match:
-                        rna_price = int(match.group(1).replace(',', ''))
+                        rna_price = float(match.group(1).replace(',', ''))
                         print(f"Extracted R.N.A. price: {rna_price} from row {i}")
                     else:
                         print(f"Failed to extract R.N.A. price from: {row['Purchaser']}")
@@ -666,9 +666,7 @@ def keenland():
                     if rna_price is not None:
                         df.at[i, 'PRICE'] = rna_price
                         print(f"Updated PRICE to {rna_price} for row {i}")
-
-            # Convert np.nan to None for database compatibility
-            df['PRICE'] = df['PRICE'].apply(lambda x: None if pd.isna(x) else x)
+                        
         # Process the data
         df = process_prices(df)
 
