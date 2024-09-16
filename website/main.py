@@ -613,11 +613,6 @@ def keenland():
         else: 
             df['PURLNAME'] = ''
 
-
-        # Dropping a column PURCHASER
-        if 'Purchaser' in df.columns:
-            df.drop(columns=['Purchaser'], inplace=True)
-
         # Adding a new column SBCITY
         sbcity = ''
         df['SBCITY'] = sbcity
@@ -726,6 +721,10 @@ def keenland():
         elif 'Sire Of Dam' in df.columns:
             df.drop(columns=['Sire Of Dam'], inplace=True)
 
+        # Dropping a column PURCHASER
+        if 'Purchaser' in df.columns:
+            df.drop(columns=['Purchaser'], inplace=True)
+            
         df.drop(columns=['utt'], inplace=True)
         # Dropping a column BARN
         # df.drop(columns=['BARN'], inplace=True)
