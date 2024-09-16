@@ -1145,7 +1145,24 @@ def fasigTipton():
             'ILLINOIS': 'IL',
             'NEW JERSEY': 'NJ',
             'ALABAMA': 'AL',
-            
+            'COLORADO': 'CO',
+            'GEORGIA': 'GA',
+            'MISSOURI': 'MO',
+            'WEST VIRGINIA': 'WV',
+            'MISSISSIPPI': 'MS',
+            'TENNESSEE': 'TN',
+            'MASSACHUSETTS': 'MA',
+            'KANSAS': 'KS',
+            'CONNECTICUT': 'CT',
+            'NORTH CAROLINA': 'NC',
+            'SOUTH CAROLINA': 'SC',
+            'DELAWARE': 'DE',
+            'MICHIGAN': 'MI',
+            'WISCONSIN': 'WI',
+            'NEVADA': 'NV',
+            'NEBRASKA': 'NE',
+            'UTAH': 'UT',
+            'IDAHO': 'ID',
         }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
