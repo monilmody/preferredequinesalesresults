@@ -627,11 +627,15 @@ def keenland():
 
 
         def process_prices(df):
+            if df is None or not isinstance(df, pd.DataFrame):
+                raise ValueError("Input is not a valid DataFrame.")
+            
+            # Ensure 'Price' column is treated as integer where possible
             def parse_price(value):
-                    try:
-                        return int(value)
-                    except (ValueError, TypeError):
-                        return np.nan
+                try:
+                    return int(value)
+                except (ValueError, TypeError):
+                    return np.nan
 
             # Replace '---' with np.nan and convert 'Price' to numeric values
             df['Price'] = df['Price'].replace('---', np.nan).apply(parse_price)
@@ -643,7 +647,7 @@ def keenland():
 
             # Print initial DataFrame for debugging
             print("Initial DataFrame:")
-            print(df)
+            print(df.head())
 
             # Process each row
             for i, row in df.iterrows():
@@ -665,7 +669,6 @@ def keenland():
 
             # Convert np.nan to None for database compatibility
             df['PRICE'] = df['PRICE'].apply(lambda x: None if pd.isna(x) else x)
-
         # Process the data
         df = process_prices(df)
 
