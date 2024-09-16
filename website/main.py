@@ -651,20 +651,21 @@ def keenland():
         for i, row in df.iterrows():
             if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
                 # Extract the price from R.N.A. entry
-                match = re.search(r'\(([^)]+)\)', row['Purchaser'])
+                match = re.search(r'\(([\d,]+)\)', row['Purchaser'])
                 if match:
                     try:
                         rna_price = float(match.group(1).replace(',', ''))
                         print(f"Extracted R.N.A. price: {rna_price} from row {i}")
+                        # Set the PRICE for the current row to the extracted rna_price
+                        df.at[i, 'PRICE'] = rna_price
                     except ValueError:
                         print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
                         rna_price = None
                 else:
                     print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
-                # Set PRICE to np.nan for R.N.A. rows
-                df.at[i, 'PRICE'] = np.nan
-            elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
-                # Populate 'PRICE' for missing entries based on the last R.N.A. price
+
+            elif pd.isna(row['PRICE']):
+                # Populate 'PRICE' for missing entries based on the last valid R.N.A. price
                 if rna_price is not None:
                     df.at[i, 'PRICE'] = rna_price
                     print(f"Updated PRICE to {rna_price} for row {i}")
