@@ -1047,11 +1047,11 @@ def fasigTipton():
 
         # Check if 'NAME' is a column in the DataFrame
         if 'NAME' in df.columns:
-            df['HORSE'] = df['NAME'].fillna("No Horse")
-            df['CHORSE'] = df['NAME'].fillna("No Horse")
-
-        # Drop the 'NAME' column
-        if 'NAME' in df.columns:
+            # Fill NaN and empty strings in 'NAME' and create 'HORSE' and 'CHORSE'
+            df['HORSE'] = df['NAME'].fillna("No Horse").replace('', 'No Horse')
+            df['CHORSE'] = df['NAME'].fillna("No Horse").replace('', 'No Horse')
+            
+            # Drop the 'NAME' column after processing
             df.drop(columns=['NAME'], inplace=True)
 
         # Adding a new column RATING
