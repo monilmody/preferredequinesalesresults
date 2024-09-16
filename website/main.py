@@ -94,6 +94,8 @@ def upload_data_to_mysql(df):
             UTT = Column(String(255))
             STATUS = Column(String(255))
             TDAM = Column(String(255))
+            TSIRE = Column(String(255))
+            TSIREOFDAM = Column(String(255))
             DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
             # tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
@@ -701,6 +703,12 @@ def keenland():
 
         # Adding a new column DAM
         df['TDAM'] = df['Dam']
+
+        # Adding a new column SIRE
+        df['tSire'] = df['Sire']
+
+        # Adding a new column SIREOFDAM
+        df['tSireofdam'] = df['Sire Of Dam']
 
         df.drop(columns=['utt'], inplace=True)
         # Dropping a column BARN
