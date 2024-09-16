@@ -734,7 +734,7 @@ def keenland():
         df['tSire'] = df['Sire']
 
         # Adding a new column SIREOFDAM
-        df['tSireofdam'] = df['Sire Of Dam']
+        df['tSireofdam'] = df['Sire Of Dam'].fillna("")
 
         
         # Dropping columns Broodmare Sire and Sire Of Dam
