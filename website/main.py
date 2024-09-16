@@ -1091,7 +1091,7 @@ def fasigTipton():
 
         # Adding a new column COLOR
         if 'COLOR1' in df.columns:
-            df['COLOR'] = df['COLOR1']
+            df['COLOR'] = df['COLOR1'].fillna("")
 
         # Dropping a column COLOR1
         if 'COLOR1' in df.columns:
