@@ -625,50 +625,45 @@ def keenland():
         sbcountry = ''
         df['SBCOUNTRY'] = sbcountry
 
+        # Ensure df is a valid DataFrame
+        if df is None or not isinstance(df, pd.DataFrame):
+            raise ValueError("Input is not a valid DataFrame.")
+        
+        # Print initial DataFrame for debugging
+        print("Initial DataFrame:")
+        print(df.head())
 
-        def process_prices(df):
-            # Ensure df is a valid DataFrame
-            if df is None or not isinstance(df, pd.DataFrame):
-                raise ValueError("Input is not a valid DataFrame.")
-            
-            # Print initial DataFrame for debugging
-            print("Initial DataFrame:")
-            print(df.head())
+        # Define the mapping for R.N.A.
+        price_mapping = {
+            '---': np.nan
+        }
+        
+        # Replace '---' with np.nan in 'Price' and convert to float
+        if 'Price' in df.columns:
+            df['Price'] = df['Price'].replace(price_mapping)
+            df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')  # Convert to float
+        else:
+            df['PRICE'] = np.nan
+        
+        rna_price = None
 
-            # Define the mapping for R.N.A.
-            price_mapping = {
-                '---': np.nan
-            }
-            
-            # Replace '---' with np.nan in 'Price' and convert to float
-            if 'Price' in df.columns:
-                df['Price'] = df['Price'].replace(price_mapping)
-                df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')  # Convert to float
-            else:
-                df['PRICE'] = np.nan
-            
-            rna_price = None
-
-            # Process each row
-            for i, row in df.iterrows():
-                if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
-                    # Extract the price from R.N.A. entry
-                    match = re.search(r'\(([^)]+)\)', row['Purchaser'])
-                    if match:
-                        rna_price = float(match.group(1).replace(',', ''))
-                        print(f"Extracted R.N.A. price: {rna_price} from row {i}")
-                    else:
-                        print(f"Failed to extract R.N.A. price from: {row['Purchaser']}")
-                    # Set PRICE to np.nan for R.N.A. rows
-                    df.at[i, 'PRICE'] = np.nan
-                elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
-                    # Populate 'PRICE' for missing entries based on the last R.N.A. price
-                    if rna_price is not None:
-                        df.at[i, 'PRICE'] = rna_price
-                        print(f"Updated PRICE to {rna_price} for row {i}")
-                        
-        # Process the data
-        df = process_prices(df)
+        # Process each row
+        for i, row in df.iterrows():
+            if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
+                # Extract the price from R.N.A. entry
+                match = re.search(r'\(([^)]+)\)', row['Purchaser'])
+                if match:
+                    rna_price = float(match.group(1).replace(',', ''))
+                    print(f"Extracted R.N.A. price: {rna_price} from row {i}")
+                else:
+                    print(f"Failed to extract R.N.A. price from: {row['Purchaser']}")
+                # Set PRICE to np.nan for R.N.A. rows
+                df.at[i, 'PRICE'] = np.nan
+            elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
+                # Populate 'PRICE' for missing entries based on the last R.N.A. price
+                if rna_price is not None:
+                    df.at[i, 'PRICE'] = rna_price
+                    print(f"Updated PRICE to {rna_price} for row {i}")
 
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
