@@ -625,28 +625,35 @@ def keenland():
         sbcountry = ''
         df['SBCOUNTRY'] = sbcountry
 
+           # Define the mapping for '---' to pd.NA
         price_mapping = {
             '---': pd.NA
         }
-        # Adding a new column PRICE
+        
+        # Adding a new column PRICE based on 'Price'
         if 'Price' in df.columns:
             df['PRICE'] = df['Price'].replace(price_mapping)
         else:
-            df['PRICE'] = 0
+            df['PRICE'] = pd.NA
 
         rna_price = None
 
-        for i, row in df.iterrows():
-            if isinstance(row['PRICE'], str) and 'R.N.A.' in row['Purchaser']:
+        def process_row(row):
+            nonlocal rna_price
+            if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
                 # Extract the price from R.N.A. entry
                 match = re.search(r'\(([^)]+)\)', row['Purchaser'])
                 if match:
                     rna_price = int(match.group(1).replace(',', ''))
-                # Set PRICE to NaN for R.N.A. rows
-                df.at[i, 'PRICE'] = pd.NA
-            elif row['PRICE'] == 0 and rna_price is not None:
+                # Set PRICE to pd.NA for R.N.A. rows
+                return pd.NA
+            elif pd.isna(row['PRICE']) and rna_price is not None:
                 # Populate 'PRICE' for 'Out' entries based on the last R.N.A. price
-                df.at[i, 'PRICE'] = rna_price
+                return rna_price
+            return row['PRICE']
+
+        # Apply the processing function to each row
+        df['PRICE'] = df.apply(process_row, axis=1)
 
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
@@ -724,7 +731,7 @@ def keenland():
         # Dropping a column PURCHASER
         if 'Purchaser' in df.columns:
             df.drop(columns=['Purchaser'], inplace=True)
-            
+
         df.drop(columns=['utt'], inplace=True)
         # Dropping a column BARN
         # df.drop(columns=['BARN'], inplace=True)
