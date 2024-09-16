@@ -627,14 +627,14 @@ def keenland():
 
            # Define the mapping for '---' to pd.NA
         price_mapping = {
-            '---': pd.NA
+            '---': np.nan
         }
         
         # Adding a new column PRICE based on 'Price'
         if 'Price' in df.columns:
             df['PRICE'] = df['Price'].replace(price_mapping)
         else:
-            df['PRICE'] = pd.NA
+            df['PRICE'] = np.nan
 
         rna_price = None
 
@@ -646,7 +646,7 @@ def keenland():
                 if match:
                     rna_price = int(match.group(1).replace(',', ''))
                 # Set PRICE to pd.NA for R.N.A. rows
-                df.at[i, 'PRICE'] = pd.NA
+                df.at[i, 'PRICE'] = np.nan
             elif pd.isna(row['PRICE']) or row['PRICE'] == 0:
                 # Populate 'PRICE' for missing entries based on the last R.N.A. price
                 if rna_price is not None:
