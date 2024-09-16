@@ -1156,10 +1156,6 @@ def fasigTipton():
         if 'SIRE1' in df.columns:
             df['CSIRE'] = df['SIRE1']
 
-        # Dropping a column SIRE1
-        if 'SIRE1' in df.columns:
-            df.drop(columns=['SIRE1'], inplace=True)
-
         # Adding a new column DAM
         if 'DAM1' in df.columns:
             df['DAM'] = df['DAM1']
@@ -1297,6 +1293,10 @@ def fasigTipton():
         # Dropping a column DAM1
         if 'DAM1' in df.columns:
             df.drop(columns=['DAM1'], inplace=True)
+
+        # Dropping a column SIRE1
+        if 'SIRE1' in df.columns:
+            df.drop(columns=['SIRE1'], inplace=True)
 
         # Dropping a column SIRE OF DAM
         if 'SIRE OF DAM' in df.columns:
