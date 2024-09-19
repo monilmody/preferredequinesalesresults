@@ -359,6 +359,7 @@ def keenland():
 
         # Update sale dates
         update_sale_dates(df, sale_dates_input)
+        print(df[['DAY', 'SALEDATE']])
         
         # # Initialize a counter
         # counter = 0
@@ -655,7 +656,6 @@ def keenland():
                 if match:
                     try:
                         rna_price = float(match.group(1).replace(',', ''))
-                        print(f"Extracted R.N.A. price: {rna_price} from row {i}")
                         # Set the PRICE for the current row to the extracted rna_price
                         df.at[i, 'PRICE'] = rna_price
                     except ValueError:
@@ -668,7 +668,6 @@ def keenland():
                 # Populate 'PRICE' for missing entries based on the last valid R.N.A. price
                 if rna_price is not None:
                     df.at[i, 'PRICE'] = rna_price
-                    print(f"Updated PRICE to {rna_price} for row {i}")
 
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
