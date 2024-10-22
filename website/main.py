@@ -30,10 +30,10 @@ csv_data = pd.DataFrame({})
 
 def upload_data_to_mysql(df):
     global csv_data
-    db_host = "172.31.44.125"
+    db_host = "localhost"
     db_name = "horse"
-    db_user = "preferredequine"
-    db_pass = "1234"
+    db_user = "root"
+    db_pass = "Mumbaiindia!1"
     
     try:
         # Create a MySQL engine
@@ -982,7 +982,7 @@ def fasigTipton():
         # Adding a new column SALEDATE
         if 'SESSION' in df.columns:
             # Convert 'SESSION' to datetime with the original format
-            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y')
+            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y', errors='coerce')
             
             # Format 'SALEDATE' to 'YYYY-MM-DD' for MySQL compatibility
             df['SALEDATE'] = df['SALEDATE'].dt.strftime('%Y-%m-%d')
@@ -1895,7 +1895,7 @@ def obs():
         df['GAIT'] = gait
 
         # Adding a new column TYPE
-        df['TYPE'] = df['horsetype'].fillna("")
+        df['TYPE'] = df['horsetype'].fillna("R")
 
         # Adding a new column RECORD
         record = ''
@@ -1918,10 +1918,6 @@ def obs():
         if 'sire_name' in df.columns:
             df['CSIRE'] = df['sire_name'].fillna("")
 
-        # Dropping a column SIRE1
-        if 'sire_name' in df.columns:
-            df.drop(columns=['sire_name'], inplace=True)
-
         # Adding a new column DAM
         if 'dam_name' in df.columns:
             df['DAM'] = df['dam_name'].fillna("")
@@ -1930,10 +1926,6 @@ def obs():
         if 'dam_name' in df.columns:
             df['CDAM'] = df['dam_name'].fillna("")
 
-        # Dropping a column DAM1
-        if 'dam_name' in df.columns:
-            df.drop(columns=['dam_name'], inplace=True)
-
         # Adding a new column SIREOFDAM
         if 'dam_sire' in df.columns:
             df['SIREOFDAM'] = df['dam_sire'].fillna("")
@@ -1941,10 +1933,6 @@ def obs():
         # Adding a new column CSIREOFDAM
         if 'dam_sire' in df.columns:
             df['CSIREOFDAM'] = df['dam_sire'].fillna("")
-
-        # Dropping a column SIRE OF DAM
-        if 'dam_sire' in df.columns:
-            df.drop(columns=['dam_sire'], inplace=True)
 
         df.drop(columns=['sort_dam'], inplace=True)
         df.drop(columns=['property_line_2'], inplace=True)
@@ -2065,6 +2053,22 @@ def obs():
         df.drop(columns=['ut_time'], inplace=True)
 
         df['STATUS'] = ""
+
+        df['tSire'] =  df['sire_name'].fillna("")
+        df['TDAM'] = df['dam_name'].fillna("")
+        df['tSireofdam'] = df['dam_sire'].fillna("")
+
+        # Dropping a column SIRE1
+        if 'sire_name' in df.columns:
+            df.drop(columns=['sire_name'], inplace=True)
+
+        # Dropping a column DAM1
+        if 'dam_name' in df.columns:
+            df.drop(columns=['dam_name'], inplace=True)
+
+        # Dropping a column DAM SIRE
+        if 'dam_sire' in df.columns:
+            df.drop(columns=['dam_sire'], inplace=True)
 
         df.drop(columns=['ut_distance'], inplace=True)
         df.drop(columns=['ut_actual_date'], inplace=True)
@@ -2383,6 +2387,10 @@ def obsmixed():
         # Adding a new column BREED
         breed = 'T'
         df['BREED'] = breed
+
+        df['TDAM'] = df['dam_name'].fillna("")
+
+
 
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
