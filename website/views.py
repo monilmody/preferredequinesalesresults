@@ -65,4 +65,12 @@ def arquana():
 
 @views.route("/uploads/<filename>")
 def download_file(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+    print(f"Received request for file: {filename}")  # Log request for debugging
+    
+    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        print(f"File {filename} found. Sending file.")  # Log when file is found
+        return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+    else:
+        print(f"File {filename} not found.")  # Log when file is not found
+        return f"File {filename} not found", 404

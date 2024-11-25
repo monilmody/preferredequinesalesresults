@@ -42,10 +42,10 @@ def allowed_file(filename):
 
 def upload_data_to_mysql(df):
     global csv_data
-    db_host = "preferred-equine-database.cdq66kiey6co.us-east-1.rds.amazonaws.com"
+    db_host = "localhost"
     db_name = "horse"
-    db_user = "preferredequine"
-    db_pass = "914MoniMaker77$$"
+    db_user = "root"
+    db_pass = "Mumbaiindia!1"
 
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
@@ -94,18 +94,21 @@ def upload_data_to_mysql(df):
         # Create a new session
         session = Session()
 
+        # Get the base filename without extension (remove ".csv")
+        filename_without_extension = os.path.splitext(filename)[0]
+
         # Check if the file (based on SALECODE) already exists in the database
         check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
-        result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename}).fetchone()
+        result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename_without_extension}).fetchone()
 
         if result_existing_file:
             # File exists, delete previous records and the file from the system
             delete_previous_records_sql = text("DELETE FROM documents WHERE file_name = :file_name")
-            session.execute(delete_previous_records_sql, {'file_name': filename})
+            session.execute(delete_previous_records_sql, {'file_name': filename_without_extension})
             session.commit()
 
             # Delete the previous file from the file system
-            previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0])
+            previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ".csv")
             if os.path.exists(previous_file_path):
                 os.remove(previous_file_path)
 
@@ -118,7 +121,7 @@ def upload_data_to_mysql(df):
             INSERT INTO documents (file_name, upload_date)
             VALUES (:file_name, NOW())
         """)
-        session.execute(insert_file_sql, {'file_name': filename})
+        session.execute(insert_file_sql, {'file_name': filename_without_extension})
         session.commit()
 
         # Define the table schema for tsales
