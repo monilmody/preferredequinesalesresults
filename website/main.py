@@ -5,12 +5,15 @@ from views import views
 import pandas as pd
 from datetime import datetime
 from datetime import date
-from sqlalchemy import Column, String, Date, Float, ForeignKey, Integer, create_engine
+from sqlalchemy import text, Column, String, Date, Float, ForeignKey, Integer, create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import time
 from mysql.connector import Error as MySQLError
 import sys
 import re
+import os
+from werkzeug.utils import secure_filename
+
 print(sys.executable)
 
 app = Flask(__name__)
@@ -28,14 +31,60 @@ app.register_blueprint(views, url_prefix="/views")
 Base = declarative_base()
 csv_data = pd.DataFrame({})
 
+UPLOAD_FOLDER = 'uploads/'  # Path to the upload directory
+# Set the UPLOAD_FOLDER in the app's configuration
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')  # Or any path you prefer
+ALLOWED_EXTENSIONS = {'csv', 'xlsx'}  # Allowed file types: CSV and Excel
+
+def allowed_file(filename):
+    """Check if the uploaded file is either a CSV or Excel file."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "preferred-equine-database.cdq66kiey6co.us-east-1.rds.amazonaws.com"
     db_name = "horse"
     db_user = "preferredequine"
     db_pass = "914MoniMaker77$$"
-    
+
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+
     try:
+
+        # Get the file name and the file path
+        # Get the SALECODE from the request (assuming it's passed in the HTML form or URL)
+        sale_code = request.form.get('salecode')  # If it's from a form
+        # Or you can also get it from the URL parameter (if passed that way)
+        # sale_code = request.args.get('SALECODE')
+
+        if not sale_code:
+            raise ValueError("SALECODE not provided")
+        
+        # Check if the file was uploaded
+        if 'file' not in request.files:
+            raise ValueError("No file part in the request")
+
+        file = request.files['file']
+        if file.filename == '':
+            raise ValueError("No selected file")
+
+        # Ensure the file has an allowed extension (CSV or Excel)
+        if file and allowed_file(file.filename):
+            # Use SALECODE as the filename (add .csv or .xlsx extension based on file type)
+            file_extension = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"{sale_code}.{file_extension}"
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+            # Check if a file with the same SALECODE already exists
+            if os.path.exists(file_path):
+                os.remove(file_path)  # Remove the old file before saving the new one
+
+            # Save the new file to the uploads folder
+            file.save(file_path)
+
+            print(f"File {filename} uploaded successfully to {file_path}")
+
         # Create a MySQL engine
         engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}")
 
@@ -45,9 +94,32 @@ def upload_data_to_mysql(df):
         # Create a new session
         session = Session()
 
-        # Upload data to MySQL database
-        table_name = 'tsales'
-        table_name1 = 'tdamsire'
+        # Check if the file (based on SALECODE) already exists in the database
+        check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
+        result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename}).fetchone()
+
+        if result_existing_file:
+            # File exists, delete previous records and the file from the system
+            delete_previous_records_sql = text("DELETE FROM documents WHERE file_name = :file_name")
+            session.execute(delete_previous_records_sql, {'file_name': filename})
+            session.commit()
+
+            # Delete the previous file from the file system
+            previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0])
+            if os.path.exists(previous_file_path):
+                os.remove(previous_file_path)
+
+        # # Save the new file using the SALECODE as the filename (just a placeholder)
+        # with open(file_path, 'w') as f:
+        #     f.write("This is a placeholder file for SALECODE: " + sale_code)  # Example content
+
+        # Insert file details into the database (with the current timestamp)
+        insert_file_sql = text("""
+            INSERT INTO documents (file_name, upload_date)
+            VALUES (:file_name, NOW())
+        """)
+        session.execute(insert_file_sql, {'file_name': filename})
+        session.commit()
 
         # Define the table schema for tsales
         class main_Tsales(Base):
@@ -150,20 +222,16 @@ def upload_data_to_mysql(df):
                         time.sleep(2)  # Wait for a few seconds before retrying
                         continue
 
-        # Commit the session after the loop
-        session.commit()
-        print(f'Data uploaded to tables {table_name} and {table_name1} in the database {db_name}')
+        session.commit()  # Commit all changes
+        print("Data inserted successfully into both tsales and tdamsire tables.")
+        print(f"File {filename} uploaded and data inserted successfully.")
 
-        
-        #return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
-
-    except (RuntimeError, Exception) as e:
-        # Log the exception or print the error message for debugging
+    except Exception as e:
         print(f"Error: {str(e)}")
         session.rollback()
-        return e
     finally:
         session.close()
+    return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
 
 @app.route("/")
 def home():

@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, send_from_directory, current_app
+import os
 
 views = Blueprint(__name__, "views")
 
@@ -61,3 +62,7 @@ def arquanaRedirect():
 @views.route("/arquana")
 def arquana():
     return render_template("arquana.html")
+
+@views.route("/uploads/<filename>")
+def download_file(filename):
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
