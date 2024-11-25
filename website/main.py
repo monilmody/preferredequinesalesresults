@@ -30,10 +30,10 @@ csv_data = pd.DataFrame({})
 
 def upload_data_to_mysql(df):
     global csv_data
-    db_host = "localhost"
+    db_host = "preferred-equine-database.cdq66kiey6co.us-east-1.rds.amazonaws.com"
     db_name = "horse"
-    db_user = "root"
-    db_pass = "Mumbaiindia!1"
+    db_user = "preferredequine"
+    db_pass = "914MoniMaker77$$"
     
     try:
         # Create a MySQL engine
