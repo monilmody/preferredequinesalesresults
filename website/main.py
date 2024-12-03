@@ -40,6 +40,44 @@ def allowed_file(filename):
     """Check if the uploaded file is either a CSV or Excel file."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def handle_file_upload(request):
+    try:
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        
+        print(request.files)
+
+        file = request.files['file']
+        
+        print("Filename:", file.filename)
+
+        if file.filename == '':
+            raise ValueError("No selected file")
+
+        # Ensure the file has an allowed extension (CSV or Excel)
+        if file and allowed_file(file.filename):
+            # Use SALECODE as the filename (add .csv or .xlsx extension based on file type)
+            filename = file.filename  # Use the original filename for now
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+             # Check if a file with the same SALECODE already exists
+            if os.path.exists(file_path):
+                os.remove(file_path)  # Remove the old file before saving the new one
+            try:
+                file.save(file_path)
+                print(f"File successfully saved to: {file_path}")
+            except Exception as e:
+                print(f"Error saving file: {e}")
+
+            # After saving, process or format the file (this can be any format operation you want)
+          # Format the file (e.g., drop columns, modify data)
+            return file_path
+        else:
+            raise ValueError("Invalid file type")
+
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+        raise e
+    
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "preferred-equine-database.cdq66kiey6co.us-east-1.rds.amazonaws.com"
@@ -47,44 +85,8 @@ def upload_data_to_mysql(df):
     db_user = "preferredequine"
     db_pass = "914MoniMaker77$$"
 
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
-
     try:
-
-        # Get the file name and the file path
-        # Get the SALECODE from the request (assuming it's passed in the HTML form or URL)
-        sale_code = request.form.get('salecode')  # If it's from a form
-        # Or you can also get it from the URL parameter (if passed that way)
-        # sale_code = request.args.get('SALECODE')
-
-        if not sale_code:
-            raise ValueError("SALECODE not provided")
-        
-        # Check if the file was uploaded
-        if 'file' not in request.files:
-            raise ValueError("No file part in the request")
-
-        file = request.files['file']
-        if file.filename == '':
-            raise ValueError("No selected file")
-
-        # Ensure the file has an allowed extension (CSV or Excel)
-        if file and allowed_file(file.filename):
-            # Use SALECODE as the filename (add .csv or .xlsx extension based on file type)
-            file_extension = file.filename.rsplit('.', 1)[1].lower()
-            filename = f"{sale_code}.{file_extension}"
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-
-            # Check if a file with the same SALECODE already exists
-            if os.path.exists(file_path):
-                os.remove(file_path)  # Remove the old file before saving the new one
-
-            # Save the new file to the uploads folder
-            file.save(file_path)
-
-            print(f"File {filename} uploaded successfully to {file_path}")
-
+        print("1")
         # Create a MySQL engine
         engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}")
 
@@ -94,9 +96,14 @@ def upload_data_to_mysql(df):
         # Create a new session
         session = Session()
 
+        file = request.files['file']
+
+        # Extract the filename from the FileStorage object
+        filename = file.filename
+
         # Get the base filename without extension (remove ".csv")
         filename_without_extension = os.path.splitext(filename)[0]
-
+        print("2")
         # Check if the file (based on SALECODE) already exists in the database
         check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
         result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename_without_extension}).fetchone()
@@ -123,7 +130,7 @@ def upload_data_to_mysql(df):
         """)
         session.execute(insert_file_sql, {'file_name': filename_without_extension})
         session.commit()
-
+        print("3")
         # Define the table schema for tsales
         class main_Tsales(Base):
             __tablename__ = 'tsales'
@@ -227,7 +234,6 @@ def upload_data_to_mysql(df):
 
         session.commit()  # Commit all changes
         print("Data inserted successfully into both tsales and tdamsire tables.")
-        print(f"File {filename} uploaded and data inserted successfully.")
 
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -304,11 +310,13 @@ def keenland():
     try:
         if 'file' not in request.files:
             return render_template('keenland.html', message='No file path')
-        file_path = request.files['file']
+        file = request.files['file']
 
-        if file_path.filename == '':
+        if file.filename == '':
             return render_template('keenland.html', message='No selected file')
-        
+
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+
         # Read the selected Excel file into a DataFrame
         df = pd.read_csv(file_path)
 
@@ -710,14 +718,7 @@ def keenland():
             '---': np.nan
         }
         
-        # Replace '---' with np.nan in 'Price' and convert to float
-        if 'Price' in df.columns:
-            df['Price'] = df['Price'].replace(price_mapping)
-            df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')  # Convert to float
-        else:
-            df['PRICE'] = np.nan
-        
-        rna_price = None
+        df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')
 
         # Process each row
         for i, row in df.iterrows():
@@ -886,101 +887,12 @@ def keenland():
 
         if 'Breeders Cup Eligible' in df.columns:
             df.drop(columns=['Breeders Cup Eligible'], inplace=True)
-
-        # Dropping a column SOLD AS DESCRIPTION
-        # df.drop(columns=['SOLD AS DESCRIPTION'], inplace=True)
-
-        # Dropping a column FOALED
-        # df.drop(columns=['FOALED'], inplace=True)
-
-        # # Determining the output path for the modified file
-        # output_file_path = 'C:\\Users\\monil\\Downloads\\{}.csv'.format(salecode)
-
-        # # Checking whether the file is already in the file explorer
-        # if os.path.exists(output_file_path):
-        #     # If the file exists, remove it
-        #     os.remove(output_file_path)
-
-        # # Saving the file as a csv extension
-        # df.to_csv(output_file_path, index=False)
-
-        # # Opening the file once it is converted to csv file
-        # os.system(f'start {output_file_path}')
             
         print("reached here 1")
-          
-        # db_host = "localhost"
-        # port = 3306
-        # db_name = "horses"
-        # db_user = "root"
-        # db_pass = ""
-        
-        #     # Create a MySQL engine
-        # engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}:{port}/{db_name}")
+        # Save the formatted file back to the server
+        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
+        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
-        # # Upload data to MySQL database
-        # table_name = 'tsales'
-        # table_name1 = 'tdamsire'
-        # table_schema = {
-            # "SALEYEAR": INT,
-            # "SALETYPE": VARCHAR(1),
-            # "SALECODE": VARCHAR(20),
-            # "SALEDATE": DATE,
-            # "BOOK": VARCHAR(2),
-            # "DAY": INT,
-            # "HIP": VARCHAR(6),
-            # "HIPNUM": INT,
-            # "HORSE": VARCHAR(35),
-            # "CHORSE": VARCHAR(35),
-            # "RATING": VARCHAR(5),
-            # "TATTOO": VARCHAR(6),
-            # "DATEFOAL": DATE,
-            # "AGE": INT,
-            # "COLOR": VARCHAR(5),
-            # "SEX": VARCHAR(3),
-            # "GAIT": VARCHAR(3),
-            # "TYPE": VARCHAR(3),
-            # "RECORD": VARCHAR(25),
-            # "ET": VARCHAR(1),
-            # "ELIG": VARCHAR(2),
-            # "BREDTO": VARCHAR(20),
-            # "LASTBRED": DATE,
-            # "CONSLNAME": VARCHAR(60),
-            # "CONSNO": VARCHAR(20),
-            # "PEMCODE": VARCHAR(15),
-            # "PURFNAME": VARCHAR(30),
-            # "PURLNAME": VARCHAR(70),
-            # "SBCITY": VARCHAR(25),
-            # "SBSTATE": VARCHAR(10),
-            # "SBCOUNTRY": VARCHAR(15),
-            # "PRICE": DOUBLE,
-            # "CURRENCY": VARCHAR(3),
-            # "URL": VARCHAR(150),
-            # "NFFM": VARCHAR(2),
-            # "PRIVATESALE": VARCHAR(2),
-            # "BREED": VARCHAR(2),
-            # "YEARFOAL": INT
-        # }
-
-        # table_schema1 = {
-            # "SIRE": VARCHAR(50),
-            # "CSIRE": VARCHAR(50),
-            # "DAM": VARCHAR(50),
-            # "CDAM": VARCHAR(50),
-            # "SIREOFDAM": VARCHAR(50),
-            # "CSIREOFDAM": VARCHAR(50),
-            # "DAMOFDAM": VARCHAR(50),
-            # "CDAMOFDAM": VARCHAR(50),
-            # "DAMTATT": VARCHAR(6),
-            # "DAMYOF": INT,
-            # "DDAMTATT": VARCHAR(6)
-        # }
-        # df.to_sql(table_name, con=engine, if_exists='replace', index=False, dtype=table_schema)
-        # df.to_sql(table_name1, con=engine, if_exists='replace', index=False, dtype=table_schema1)
-        # print(f'Data uploaded to table {table_name} in the database {db_name}')
-
-        # csv_data = pd.concat([csv_data, df], ignore_index=True)
-        #return render_template("index.html", message='File uploaded successfully', data=df.to_html())
         upload_data_to_mysql(df)
         # Engine.execute("COMMIT;") 
         print("reached here 2")
