@@ -917,6 +917,8 @@ def fasigTipton():
         if file_path.filename == '':
             return render_template('fasigtipton.html', message='No selected file')
         
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+        
         # Read the selected Excel file into a DataFrame
         df = pd.read_csv(file_path)
 
@@ -1145,6 +1147,8 @@ def fasigTipton():
             'NEBRASKA': 'NE',
             'UTAH': 'UT',
             'IDAHO': 'ID',
+            'BRITISH COLUMBI': 'BC',
+            'AUS': 'AU'
         }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
@@ -1332,6 +1336,10 @@ def fasigTipton():
 
         # Dropping a column PRIVATE SALE
         df.drop(columns=['PRIVATE SALE'], inplace=True)
+
+        # Save the formatted file back to the server
+        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
+        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
         upload_data_to_mysql(df)
 
