@@ -1722,6 +1722,8 @@ def obs():
         if file_path.filename == '':
             return render_template('obs.html', message='No selected file')
         
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+        
         # Read the selected Excel file into a DataFrame
         df = pd.read_csv(file_path)
 
@@ -2067,6 +2069,9 @@ def obs():
         df.drop(columns=['ut_set'], inplace=True)
         df.drop(columns=['lastbred'], inplace=True)
         df.drop(columns=['horsetype'], inplace=True)
+
+        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
+        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
         upload_data_to_mysql(df)
 
