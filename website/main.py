@@ -2226,7 +2226,9 @@ def obs_old():
             df['DATEFOAL'] = pd.to_datetime(df['Foal Date'])
             df.drop(columns=['Foal Date'], inplace=True)
         else:
-            print("Neither 'Foaling Date' nor 'Foal Date' columns found.")
+            # Assign a default date if no date column is found
+            default_date = pd.to_datetime('1900-01-01')  # Your chosen default date
+            df['DATEFOAL'] = default_date
 
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
@@ -2248,6 +2250,8 @@ def obs_old():
         # Adding a new column COLOR
         if 'Color' in df.columns:
             df['COLOR'] = df['Color'].fillna("")
+        else:
+            df['COLOR'] = ""
 
         # Dropping a column COLOR1
         if 'Color' in df.columns:
@@ -2256,6 +2260,8 @@ def obs_old():
         # Adding a new column SEX
         if 'Sex' in df.columns:
             df['SEX'] = df['Sex'].fillna("")
+        else:
+            df['SEX'] = ""
 
         # Dropping a column SEX1
         if 'Sex' in df.columns:
@@ -2284,28 +2290,41 @@ def obs_old():
         # Adding a new column SIRE
         if 'Sire' in df.columns:
             df['SIRE'] =  df['Sire'].fillna("")
+        else:
+            df['SIRE'] = ""
 
         # Adding a new column CSIRE
         if 'Sire' in df.columns:
             df['CSIRE'] = df['Sire'].fillna("")
+        else:
+            df['CSIRE'] = "" 
 
         # Adding a new column DAM
         if 'Dam' in df.columns:
             df['DAM'] = df['Dam'].fillna("")
+        else:
+            df['DAM'] = ""
 
         # Adding a new column CDAM
         if 'Dam' in df.columns:
             df['CDAM'] = df['Dam'].fillna("")
+        else:
+            df['CDAM'] = ""
 
         # Adding a new column SIREOFDAM
         if 'Damsire' in df.columns:
             df['SIREOFDAM'] = df['Damsire'].fillna("")
+        else:
+            df['SIREOFDAM'] = ""
 
         # Adding a new column CSIREOFDAM
         if 'Damsire' in df.columns:
             df['CSIREOFDAM'] = df['Damsire'].fillna("")
+        else:
+            df['CSIREOFDAM'] = ""
 
-        df.drop(columns=['Sort by Dam'], inplace=True)
+        if 'Sort by Dam' in df.columns:
+            df.drop(columns=['Sort by Dam'], inplace=True)
         
         if 'Out date' in df.columns:
             df.drop(columns=['Out date'], inplace=True)
@@ -2350,10 +2369,10 @@ def obs_old():
         elif 'Alphabetic Consignor Sort' in df.columns:
             conlname = df['Alphabetic Consignor Sort']
         else:
-            conlname = pd.Series([])  # If neither column is found, create an empty series
+            conlname = ""  # If neither column is found, create an empty series
 
         # Adding a new column CONSLNAME
-        df['CONSLNAME'] = conlname.fillna("")
+        df['CONSLNAME'] = conlname
 
         # Dropping the column(s) if they exist
         df.drop(columns=['Alpha Sort', 'Alphabetic Consignor Sort'], inplace=True, errors='ignore')
@@ -2372,7 +2391,8 @@ def obs_old():
         purfname = ''
         df['PURFNAME'] = purfname
 
-        df.drop(columns=['Barn'], inplace=True)
+        if 'Barn' in df.columns:
+            df.drop(columns=['Barn'], inplace=True)
 
         if 'Set' in df.columns:
             df.drop(columns=['Set'], inplace=True)
@@ -2408,10 +2428,15 @@ def obs_old():
             'Out': 0
         }
 
-        df['PRICE'] = df['Price'].replace(price_mapping).fillna(0)
+        if 'Price' in df.columns:
+            df['PRICE'] = df['Price'].replace(price_mapping).fillna(0)
+        else:
+            df['PRICE'] = 0
 
-        # Adding a new column PRICE1
-        df.drop(columns=['Price'], inplace=True)
+        if 'Price' in df.columns:
+            # Adding a new column PRICE1
+            df.drop(columns=['Price'], inplace=True)
+
 
         # Adding a new column CURRENCY
         currency = ''
@@ -2431,7 +2456,7 @@ def obs_old():
         elif 'Post Sale' in df.columns:
             privatesale = df['Post Sale']
         else:
-            privatesale = pd.Series([])  # If neither column is found, create an empty series
+            privatesale = ""  # If neither column is found, create an empty string
 
         # Adding a new column PRIVATESALE
         df['PRIVATESALE'] = privatesale.fillna("")
@@ -2452,11 +2477,25 @@ def obs_old():
             # If 'UT Time' doesn't exist, directly assign 0.0 to 'UTT'
             df['UTT'] = 0.0
 
+        if 'UT Time' in df.columns:
+            df.drop(columns=['UT Time'], inplace=True)
+
         df['STATUS'] = ""
 
-        df['tSire'] =  df['Sire'].fillna("")
-        df['TDAM'] = df['Dam'].fillna("")
-        df['tSireofdam'] = df['Damsire'].fillna("")
+        if 'Sire' in df.columns:
+            df['tSire'] =  df['Sire'].fillna("")
+        else:
+            df['tSire'] = ""
+
+        if 'Dam' in df.columns:
+            df['TDAM'] = df['Dam'].fillna("")
+        else:
+            df['TDAM'] = ""
+
+        if 'Damsire' in df.columns:
+            df['tSireofdam'] = df['Damsire'].fillna("")
+        else:
+            df['tSireofdam'] = ""
 
         # Dropping a column SIRE1
         if 'Sire' in df.columns:
