@@ -19,15 +19,6 @@ print(sys.executable)
 app = Flask(__name__)
 app.register_blueprint(views, url_prefix="/views")
 
-# # MySQL database connection
-# db_user = 'preferredequine'
-# db_password = ''
-# db_host = '172.31.44.125'
-# db_port = 3306
-# db_name = 'horse'
-
-# engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_password}@{db_host}/{db_name}")
-
 Base = declarative_base()
 csv_data = pd.DataFrame({})
 
@@ -275,34 +266,6 @@ def tattersallsRedirect():
 def arquanaRedirect():
     return render_template('arquana.html')
 
-# @app.route('/upload', methods=['POST'])
-# def upload():
-    
-#     global csv_data
-
-#     # Check if the post request has the file part
-#     if 'file' not in request.files:
-#         return render_template('index.html', message='No file part')
-
-#     file = request.files['file']
-#     # If the user does not select a file, browser also
-#     # submit an empty part without filename
-#     if file.filename == '':
-#         return render_template('index.html', message='No selected file')
-    
-#     # try:
-#     #     # Read the CSV file
-#     #     df1 = pd.read_csv(file)
-        
-#     #     # Update or modify the CSV data as needed
-#     #     # For example, append the new data to the existing data
-#     #     csv_data = pd.concat([csv_data, df1], ignore_index=True)
-
-#     #     return render_template('index.html', message='File uploaded successfully', data=csv_data.to_html())
-#     # except Exception as e:
-#     #     return render_template('index.html', message=f'Error processing the file: {str(e)}')
-#     return render_template('index.html', message='fill Successfully Uploaded')
-
 @app.route('/keenland', methods=['POST'])
 
 def keenland():
@@ -336,22 +299,6 @@ def keenland():
         else:
             print("Salecode input canceled.")
 
-        # while True:
-        #     # Get user input for SALE date
-        #     saledate = request.form['saledate']
-
-        #     # Check if the user provided a date or canceled the dialog
-        #     if saledate is not None:
-        #         try:
-        #             # Try to parse the input as a valid date
-        #             saledate = pd.to_datetime(saledate)
-        #             break  # Exit the loop if parsing is successful
-        #         except ValueError:
-        #             print("Invalid date format. Please enter a valid date (YYYY-MM-DD).")
-        #     else:
-        #         print("saledate input canceled.")
-        #         break  # Exit the loop if the user cancels the dialog
-
         saleyear = request.form['saleyear']
 
         # Check if the user provided a salecode or canceled the dialog
@@ -365,22 +312,6 @@ def keenland():
 
         else:
             print("saleyear input canceled.")
-        # Renaming HIP to HIP1
-        # df.rename(columns={'Hip': 'HIP1'}, inplace=True)
-
-        # # Renaming PRICE to PRICE1
-        # df.rename(columns={'price': 'PRICE1'}, inplace=True)
-
-        # Renaming PRIVATE SALE to PRIVATE SALE1
-        # df.rename(columns={'PRIVATE SALE': 'PRIVATE SALE1'}, inplace=True)
-
-        # # Calculating the year of birth from the datefoal
-        # saledate_series = pd.to_datetime(df['SALE DATE'], errors='coerce')
-
-        # df[df['SALE DATE'].isna()]
-
-        # # Convert the date column to "YEAR-MONTH-DAY" format
-        # df['SALE DATE'] = saledate_series.dt.strftime('%Y-%m-%d')
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
         df['SALEYEAR'] = saleyear
@@ -391,27 +322,6 @@ def keenland():
 
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
-
-
-        # df['SALEDATE'] = pd.to_datetime(saledate)
-
-        # # Initialize a counter
-        # counter = 0
-
-        # # Initialize a list to store the counter values
-        # counter_values = []
-
-        # # Iterate through the list of dates
-        # for i, date_str in enumerate(df['SALE DATE']):
-        #     # Convert the date string to a datetime object
-        #     date = datetime.datetime.strptime(date_str, '%m/%d/%Y')
-        #     formatted_date = date.strftime('%Y-%m-%d')
-        #     # Check if this is the first date or if the date has changed from the previous one
-        #     if i == 0 or date != prev_date:
-        #         counter += 1  # Increment the counter when the date changes
-        #         prev_date = date  # Update the previous date
-                
-        #     counter_values.append(counter)
 
         if 'Book' in df.columns:
             df['BOOK'] = df['Book']
@@ -440,27 +350,6 @@ def keenland():
         # Update sale dates
         update_sale_dates(df, sale_dates_input)
         print(df[['DAY', 'SALEDATE']])
-        
-        # # Initialize a counter
-        # counter = 0
-
-        # # Initialize a list to store the counter values
-        # counter_values = []
-
-        # # Iterate through the list of dates
-        # for i, date_str in enumerate(df['SESSION']):
-        #     # Convert the date string to a datetime object
-        #     date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-            
-        #     # Check if this is the first date or if the date has changed from the previous one
-        #     if i == 0 or date != prev_date:
-        #         counter += 1  # Increment the counter when the date changes
-        #         prev_date = date  # Update the previous date
-                
-        #     counter_values.append(counter)
-
-        # # Adding a new column DAY
-        # df['DAY'] = counter_values
 
         # Adding a new column HIP
         df['HIP'] = df['Hip']
@@ -472,22 +361,8 @@ def keenland():
         if 'HIP1' in df.columns:
             df.drop(columns=['HIP1'], inplace=True)
 
-        # Check if 'NAME' is a column in the DataFrame
-        # if 'Horse Name' in df.columns:
-        #             # Create a new 'HORSE' column and populate it with 'NAME'
-        #             df['HORSE'] = df['Horse Name']
-        # else:
-        #     df['HORSE'] = ''
-
         default_horse = "No Horse"
         df['HORSE'] = df['Horse Name'].fillna(default_horse)
-
-        # # Check if 'NAME' is a column in the DataFrame
-        # if 'Horse Name' in df.columns:
-        #             # Create a new 'HORSE' column and populate it with 'NAME'
-        #             df['CHORSE'] = df['Horse Name']
-        # else:
-        #     df['CHORSE'] = ''
 
         default_horse = "No Horse"
         df['CHORSE'] = df['Horse Name'].fillna(default_horse)
@@ -587,19 +462,6 @@ def keenland():
         # Adding a new column ET
         et = ''
         df['ET'] = et
-
-        # Adding sate_mapping key: value pair to replace the value
-        # state_mapping = {
-        #     'KENTUCKY': 'KY',
-        #     'NEW YORK': 'NY',
-        #     'PENNSYLVANIA': 'PA',
-        #     'FLORIDA': 'FL',
-        #     'ONTARIO': 'ON',
-        #     'VIRGINIA': 'VA',
-        #     'LOUISIANA': 'LA',
-        #     'MARYLAND': 'MD',
-        #     'ARKANSAS': 'AR'
-        # }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
         if 'Elig' in df.columns:
@@ -745,12 +607,6 @@ def keenland():
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
 
-        # Adding a new column PRICE1
-        # df.drop(columns=['PRICE1'], inplace=True)
-
-        # Adding a new column SALE TITLE
-        # df.drop(columns=['SALE TITLE'], inplace=True)
-
         # Adding a new column CURRENCY
         currency = ''
         df['CURRENCY'] = currency
@@ -759,9 +615,6 @@ def keenland():
         url = '' 
         df['URL'] = url
 
-        # Dropping a column VIRTUAL INSPECTION
-        # df.drop(columns=['VIRTUAL INSPECTION'], inplace=True)
-
         # Adding a new column NFFM
         nffm = ''
         df['NFFM'] = nffm
@@ -769,9 +622,6 @@ def keenland():
         # Adding a new column PRIVATE SALE
         privatesale = ''
         df['PRIVATESALE'] = privatesale
-
-        # Dropping a column PRIVATE SALE1
-        # df.drop(columns=['PRIVATE SALE1'], inplace=True)
 
         # Adding a new column BREED
         breed = 'T'
@@ -820,11 +670,6 @@ def keenland():
             df.drop(columns=['Purchaser'], inplace=True)
 
         df.drop(columns=['utt'], inplace=True)
-        # Dropping a column BARN
-        # df.drop(columns=['BARN'], inplace=True)
-
-        # Dropping a column COVER DATE
-        # df.drop(columns=['COVER DATE'], inplace=True)
 
         # Dropping a column SOLD AS CODE
         if 'SOLD AS CODE' in df.columns:
@@ -1399,24 +1244,6 @@ def goffs():
         book = 1
         df['BOOK'] = book
 
-        # # Initialize a counter
-        # counter = 0
-
-        # # Initialize a list to store the counter values
-        # counter_values = []
-
-        # # Iterate through the list of dates
-        # for i, date_str in enumerate(df['SESSION']):
-        #     # Convert the date string to a datetime object
-        #     date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-            
-        #     # Check if this is the first date or if the date has changed from the previous one
-        #     if i == 0 or date != prev_date:
-        #         counter += 1  # Increment the counter when the date changes
-        #         prev_date = date  # Update the previous date
-                
-        #     counter_values.append(counter)
-
         # Adding a new column DAY
         day = 1
         df['DAY'] = day
@@ -1459,20 +1286,6 @@ def goffs():
         # Adding a new column DATEFOAL
         datefoal = df['Year']
         df['DATEFOAL'] = datefoal
-
-        # # Dropping a column YEAR OF BIRTH
-        # if 'YEAR OF BIRTH' in df.columns:
-        #     df.drop(columns=['YEAR OF BIRTH'], inplace=True)
-
-        # # Function to calculate the age from DATEFOAL
-        # def calculate_age(datefoal):
-        #     today = date.today()
-        #     born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
-        #     age = today.year - born.dt.year - ((today.month * 100 + today.day) < (born.dt.month * 100 + born.dt.day))
-        #     return age
-
-        # # Calling the calculate_age() function
-        # age = calculate_age(df['DATEFOAL'])
 
         # Adding a new column AGE
         age = ''
@@ -1521,25 +1334,6 @@ def goffs():
         # Adding a new column ET
         et = ''
         df['ET'] = et
-
-        # Adding sate_mapping key: value pair to replace the value
-        # state_mapping = {
-        #     'KENTUCKY': 'KY',
-        #     'NEW YORK': 'NY',
-        #     'PENNSYLVANIA': 'PA',
-        #     'FLORIDA': 'FL',
-        #     'ONTARIO': 'ON',
-        #     'VIRGINIA': 'VA',
-        #     'LOUISIANA': 'LA',
-        #     'MARYLAND': 'MD',
-        #     'ARKANSAS': 'AR',
-        #     'INDIANA': 'IN',
-        #     'OHIO': 'OH',
-        #     'CALIFORNIA': 'CA',
-        #     'TEXAS': 'TX',
-        #     'IOWA': 'IA',
-        #     'NEW MEXICO': 'NM'
-        # }
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
         elig = ''
@@ -1757,24 +1551,6 @@ def obs():
         # Adding a new column BOOK
         book = 1
         df['BOOK'] = book
-
-        # # Initialize a counter
-        # counter = 0
-
-        # # Initialize a list to store the counter values
-        # counter_values = []
-
-        # # Iterate through the list of dates
-        # for i, date_str in enumerate(request.form['saledate']):
-        #     # Convert the date string to a datetime object
-        #     date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-
-        #     # Check if this is the first date or if the date has changed from the previous one
-        #     if i == 0 or date != prev_date:
-        #         counter += 1  # Increment the counter when the date changes
-        #         prev_date = date  # Update the previous date
-                
-        #     counter_values.append(counter)
 
         # Adding a new column HIP
         df['HIP'] = df['hip_number']
@@ -2135,24 +1911,6 @@ def obs_old():
         book = 1
         df['BOOK'] = book
 
-        # # Initialize a counter
-        # counter = 0
-
-        # # Initialize a list to store the counter values
-        # counter_values = []
-
-        # # Iterate through the list of dates
-        # for i, date_str in enumerate(request.form['saledate']):
-        #     # Convert the date string to a datetime object
-        #     date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-
-        #     # Check if this is the first date or if the date has changed from the previous one
-        #     if i == 0 or date != prev_date:
-        #         counter += 1  # Increment the counter when the date changes
-        #         prev_date = date  # Update the previous date
-                
-        #     counter_values.append(counter)
-
         # Adding a new column HIP
         df['HIP'] = df['Hip']
 
@@ -2437,7 +2195,6 @@ def obs_old():
             # Adding a new column PRICE1
             df.drop(columns=['Price'], inplace=True)
 
-
         # Adding a new column CURRENCY
         currency = ''
         df['CURRENCY'] = currency
@@ -2656,14 +2413,6 @@ def tattersalls():
         # Adding a new column GAIT
         gait = ''
         df['GAIT'] = gait
-
-        # # Adding a new column TYPE
-        # if 'Covered by' in df.columns:
-        #     df['TYPE'] = df.apply(lambda x: 'B' if pd.notna(x['Covered by']) else '', axis=1)
-        # elif df['AGE'] <= 1: 
-        #     df['TYPE'] = 'Y'
-        # else:
-        #     df['TYPE'] = "RH"
 
          # Adding a new column TYPE
         condition_covered_by = df['Covered by'].notna()
@@ -2894,24 +2643,6 @@ def arquana():
         # Adding a new column BOOK
         book = 1
         df['BOOK'] = book
-
-        # # Initialize a counter
-        # counter = 0
-
-        # # Initialize a list to store the counter values
-        # counter_values = []
-
-        # # Iterate through the list of dates
-        # for i, date_str in enumerate(df['SESSION']):
-        #     # Convert the date string to a datetime object
-        #     date = datetime.strptime(date_str, '%Y-%m-%d')
-            
-        #     # Check if this is the first date or if the date has changed from the previous one
-        #     if i == 0 or date != prev_date:
-        #         counter += 1  # Increment the counter when the date changes
-        #         prev_date = date  # Update the previous date
-                
-        #     counter_values.append(counter)
 
         # Adding a new column DAY
         df['DAY'] = 1
