@@ -39,6 +39,14 @@ def obsRedirect():
 def obs():
     return render_template("obs.html")
 
+@views.route("/obs_redirect_old")
+def obsRedirectOld():
+    return render_template("obs-old.html")
+
+@views.route("/obs-old")
+def obs_old():
+    return render_template("obs-old.html")
+
 @views.route("/tattersalls_redirect")
 def tattersallsRedirect():
     return render_template("tattersalls.html")
