@@ -2219,11 +2219,14 @@ def obs_old():
         tattoo = ''
         df['TATTOO'] = tattoo
 
-        # Adding a new column DATEFOAL
-        df['DATEFOAL'] = pd.to_datetime(df['Foaling Date'])
-
-        # Dropping a column Foaling Date
-        df.drop(columns=['Foaling Date'], inplace=True)
+        if 'Foaling Date' in df.columns:
+            df['DATEFOAL'] = pd.to_datetime(df['Foaling Date'])
+            df.drop(columns=['Foaling Date'], inplace=True)
+        elif 'Foal Date' in df.columns:
+            df['DATEFOAL'] = pd.to_datetime(df['Foal Date'])
+            df.drop(columns=['Foal Date'], inplace=True)
+        else:
+            print("Neither 'Foaling Date' nor 'Foal Date' columns found.")
 
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
@@ -2303,7 +2306,12 @@ def obs_old():
             df['CSIREOFDAM'] = df['Damsire'].fillna("")
 
         df.drop(columns=['Sort by Dam'], inplace=True)
-        df.drop(columns=['Out date'], inplace=True)
+        
+        if 'Out date' in df.columns:
+            df.drop(columns=['Out date'], inplace=True)
+
+        if 'Out Date' in df.columns:
+            df.drop(columns=['Out Date'], inplace=True)
 
         # Adding a new column DAMOFDAM
         damofdam = ''
@@ -2336,12 +2344,19 @@ def obs_old():
         lastbred = df['lastbred'] 
         df['LASTBRED'] = lastbred.fillna(pd.to_datetime('1901-01-01'))
 
-        # Adding a new column CONLNAME
-        conlname = df['Alpha Sort']
+        # Check if 'Alpha Sort' or 'Alphabetic Consignor Sort' exists
+        if 'Alpha Sort' in df.columns:
+            conlname = df['Alpha Sort']
+        elif 'Alphabetic Consignor Sort' in df.columns:
+            conlname = df['Alphabetic Consignor Sort']
+        else:
+            conlname = pd.Series([])  # If neither column is found, create an empty series
+
+        # Adding a new column CONSLNAME
         df['CONSLNAME'] = conlname.fillna("")
 
-        # Dropping a column PROPERTY LINE
-        df.drop(columns=['Alpha Sort'], inplace=True)
+        # Dropping the column(s) if they exist
+        df.drop(columns=['Alpha Sort', 'Alphabetic Consignor Sort'], inplace=True, errors='ignore')
 
         # Adding a new column CONSNO
         consno = df['Consignor']
@@ -2358,6 +2373,15 @@ def obs_old():
         df['PURFNAME'] = purfname
 
         df.drop(columns=['Barn'], inplace=True)
+
+        if 'Set' in df.columns:
+            df.drop(columns=['Set'], inplace=True)
+
+        if 'Day' in df.columns:
+            df.drop(columns=['Day'], inplace=True)
+
+        if 'Out' in df.columns:
+            df.drop(columns=['Out'], inplace=True)
 
         # Adding a new column PURLNAME
         purlname = df['Buyer']
@@ -2401,17 +2425,32 @@ def obs_old():
         nffm = ''
         df['NFFM'] = nffm
 
-        # Adding a new column PRIVATE SALE
-        privatesale = df['PS']
+        # Check if 'PS' or 'Post Sale' exists
+        if 'PS' in df.columns:
+            privatesale = df['PS']
+        elif 'Post Sale' in df.columns:
+            privatesale = df['Post Sale']
+        else:
+            privatesale = pd.Series([])  # If neither column is found, create an empty series
+
+        # Adding a new column PRIVATESALE
         df['PRIVATESALE'] = privatesale.fillna("")
 
-        df.drop(columns=['PS'], inplace=True)
+        # Dropping the column(s) if they exist
+        df.drop(columns=['PS', 'Post Sale'], inplace=True, errors='ignore')
       
         # Adding a new column BREED
         breed = 'T'
         df['BREED'] = breed
 
-        df['UTT'] = ''
+        # Check if 'UT Time' exists in the DataFrame
+        if 'UT Time' in df.columns:
+            # If 'UT Time' exists, apply the mapping and fill missing values with 0.0
+            utt_mapping = {'out': 0.0}
+            df['UTT'] = df['UT Time'].replace(utt_mapping).fillna(0.0)
+        else:
+            # If 'UT Time' doesn't exist, directly assign 0.0 to 'UTT'
+            df['UTT'] = 0.0
 
         df['STATUS'] = ""
 
@@ -2431,7 +2470,9 @@ def obs_old():
         if 'Damsire' in df.columns:
             df.drop(columns=['Damsire'], inplace=True)
 
-        df.drop(columns=['Status'], inplace=True)
+        if 'Status' in df.columns:
+            df.drop(columns=['Status'], inplace=True)
+
         df.drop(columns=['lastbred'], inplace=True)
         df.drop(columns=['horsetype'], inplace=True)
 
