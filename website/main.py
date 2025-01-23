@@ -2297,6 +2297,8 @@ def tattersalls():
         if file_path.filename == '':
             return render_template('tattersalls.html', message='No selected file')
         
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+        
         # Read the selected Excel file into a DataFrame
         df = pd.read_excel(file_path)
 
@@ -2448,10 +2450,6 @@ def tattersalls():
         if 'Sire' in df.columns:
             df['CSIRE'] = df['Sire'].fillna("")
 
-        # Dropping a column SIRE1
-        if 'Sire' in df.columns:
-            df.drop(columns=['Sire'], inplace=True)
-
         # Adding a new column DAM
         if 'Dam' in df.columns:
             df['DAM'] = df['Dam'].fillna("")
@@ -2459,10 +2457,6 @@ def tattersalls():
         # Adding a new column CDAM
         if 'Dam' in df.columns:
             df['CDAM'] = df['Dam'].fillna("")
-
-        # Dropping a column DAM1
-        if 'Dam' in df.columns:
-            df.drop(columns=['Dam'], inplace=True)
 
         df.drop(columns=['Grandsire'], inplace=True)
 
@@ -2473,10 +2467,6 @@ def tattersalls():
         # Adding a new column CSIREOFDAM
         if 'Damsire' in df.columns:
             df['CSIREOFDAM'] = df['Damsire'].fillna("")
-
-        # Dropping a column SIRE OF DAM
-        if 'Damsire' in df.columns:
-            df.drop(columns=['Damsire'], inplace=True)
 
         # Adding a new column DAMOFDAM
         damofdam = ''
@@ -2575,16 +2565,39 @@ def tattersalls():
         breed = 'T'
         df['BREED'] = breed
 
+        # Adding a new column YEARFOAL and getting the year from DATEFOAL
+        df['YEARFOAL'] = df['Year Foaled'].fillna("")
+
         df['UTT'] = 0.0
         df['STATUS'] = ""
         # Calculating the year of birth from the datefoal
         datefoal_series = df['DATEFOAL']
 
-        # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['Year Foaled'].fillna("")
+        df['TDAM'] = df['Dam']
+
+        df['tSire'] = df['Sire']
+
+        df['tSireofdam'] = df['Damsire']
+
+        # Dropping a column SIRE1
+        if 'Sire' in df.columns:
+            df.drop(columns=['Sire'], inplace=True)
+
+        # Dropping a column DAM1
+        if 'Dam' in df.columns:
+            df.drop(columns=['Dam'], inplace=True)
+
+        # Dropping a column SIRE OF DAM
+        if 'Damsire' in df.columns:
+            df.drop(columns=['Damsire'], inplace=True)
+
         df.drop(columns=['Year Foaled'], inplace=True)
         df.drop(columns=['Sale'], inplace=True)
         df.drop(columns=['Stabling'], inplace=True)
+
+        # Save the formatted file back to the server
+        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
+        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
         upload_data_to_mysql(df)
 
