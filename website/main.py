@@ -1209,6 +1209,8 @@ def goffs():
         if file_path.filename == '':
             return render_template('goffs.html', message='No selected file')
         
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+        
         # Read the selected Excel file into a DataFrame
         df = pd.read_excel(file_path)
 
@@ -1228,7 +1230,7 @@ def goffs():
             print("Salecode input canceled.")
 
         # Adding a new column SALEYEAR
-        saleyear = request.form['saleyear']
+        saleyear = int(request.form['saleyear'])  # Convert saleyear to an integer
         df['SALEYEAR'] = saleyear
 
         # Adding a new column SALETYPE
@@ -1238,7 +1240,7 @@ def goffs():
         df['SALECODE'] = salecode
 
         # Adding a new column SALEDATE
-        df['SALEDATE'] = request.form['saledate']
+        df['SALEDATE'] = request.form['sale_dates']
 
         # Adding a new column BOOK
         book = 1
@@ -1263,17 +1265,18 @@ def goffs():
             df.drop(columns=['Lot'], inplace=True)
 
         # Create a new 'HORSE' column and populate it with 'NAME'
-        df['HORSE'] = df['Name']
+        if 'Name' in df.columns:
+            df['HORSE'] = df['Name']
 
         # Check if 'NAME' is a column in the DataFrame
         if 'Name' in df.columns:
-                    # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['CHORSE'] = df['Name']
+            # Create a new 'HORSE' column and populate it with 'NAME'
+            df['CHORSE'] = df['Name']
 
         # Check if 'NAME' is a column in the DataFrame
         if 'Name' in df.columns:
-                    # Dropping a column NAME
-                    df.drop(columns=['Name'], inplace=True)
+            # Dropping a column NAME
+            df.drop(columns=['Name'], inplace=True)
 
         # Adding a new column RATING
         rating = ''
@@ -1283,12 +1286,12 @@ def goffs():
         tattoo = ''
         df['TATTOO'] = tattoo
 
-        # Adding a new column DATEFOAL
-        datefoal = df['Year']
-        df['DATEFOAL'] = datefoal
+        # Adding a new column LASTBRED
+        datefoal = '1901-01-01'
+        df['DATEFOAL'] = pd.to_datetime(datefoal)
 
         # Adding a new column AGE
-        age = ''
+        age = 0
         df['AGE'] = age
 
         # Adding a new column COLOR
@@ -1309,8 +1312,8 @@ def goffs():
 
         condition_covered_by = df['Covering Sire'].notna()
         # condition_foal = df['Produit'] == 'foal'
-        condition_weanling = datefoal.dt.year == saleyear
-        condition_datefoal = datefoal.dt.year == (saleyear - 1)
+        condition_weanling = df['Year'] == saleyear
+        condition_datefoal = df['Year'] == (saleyear - 1)
         # Define choices
         choices = np.select(
             [condition_covered_by, condition_weanling, condition_datefoal],
@@ -1347,10 +1350,6 @@ def goffs():
         if 'Sire' in df.columns:
             df['CSIRE'] = df['Sire']
 
-        # Dropping a column SIRE1
-        if 'Sire' in df.columns:
-            df.drop(columns=['Sire'], inplace=True)
-
         # Adding a new column DAM
         if 'Dam' in df.columns:
             df['DAM'] = df['Dam']
@@ -1358,10 +1357,6 @@ def goffs():
         # Adding a new column CDAM
         if 'Dam' in df.columns:
             df['CDAM'] = df['Dam']
-
-        # Dropping a column DAM1
-        if 'Dam' in df.columns:
-            df.drop(columns=['Dam'], inplace=True)
 
         # Adding a new column SIREOFDAM
         if 'SIRE OF DAM' in df.columns:
@@ -1392,7 +1387,7 @@ def goffs():
         df['DAMTATT'] = damtatt
 
         # Adding a new column DAMYOF
-        damyof = ''
+        damyof = 0
         df['DAMYOF'] = damyof
 
         # Adding a new column DDAMTATT
@@ -1402,14 +1397,12 @@ def goffs():
         # Adding a new column BREDTO
         if 'Covering Sire' in df.columns:
             df['BREDTO'] = df['Covering Sire'].fillna("")
-
-        # Dropping a column CONSIGNOR NAME
-        if 'Consignor' in df.columns:
-            df.drop(columns=['Covering Sire'], inplace=True)
+        else:
+            df['BREDTO'] = ""
 
         # Adding a new column LASTBRED
-        lastbred = ''
-        df['LASTBRED'] = lastbred
+        lastbred = '1901-01-01'
+        df['LASTBRED'] = pd.to_datetime(lastbred)
 
         # Adding a new column CONLNAME
         if 'Consignor' in df.columns:
@@ -1433,7 +1426,7 @@ def goffs():
 
         # Adding a new column PURLNAME
         purlname = df['Purchaser']
-        df['PURLNAME'] = purlname
+        df['PURLNAME'] = purlname.fillna('')
 
         # Dropping a column PURCHASER
         df.drop(columns=['Purchaser'], inplace=True)
@@ -1452,7 +1445,7 @@ def goffs():
 
         # Adding a new column PRICE
         price = df['Price']
-        df['PRICE'] = price.fillna("")
+        df['PRICE'] = price.fillna(0.0)
 
         # Adding a new column PRICE1
         df.drop(columns=['Price'], inplace=True)
@@ -1488,12 +1481,34 @@ def goffs():
         # Dropping a column BARN
         df.drop(columns=['Year'], inplace=True)
 
+        if 'Dam' in df.columns:
+            df['TDAM'] = df['Dam']
+
+        # Dropping a column DAM1
+        if 'Dam' in df.columns:
+            df.drop(columns=['Dam'], inplace=True)
+        
+        if 'Sire' in df.columns:
+            df['tSire'] = df['Sire']
+
+        # Dropping a column DAM1
+        if 'Sire' in df.columns:
+            df.drop(columns=['Sire'], inplace=True)
+
+        df['tSireofdam'] = ''
+
         # Dropping a column SOLD AS CODE
         if 'Stabling' in df.columns:
             df.drop(columns=['Stabling'], inplace=True)
 
         if 'Status' in df.columns:
             df.drop(columns=['Status'], inplace=True)
+
+        df.drop(columns=['Covering Sire'], inplace=True)
+
+        # Save the formatted file back to the server
+        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
+        df.to_excel(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
         upload_data_to_mysql(df)
 
