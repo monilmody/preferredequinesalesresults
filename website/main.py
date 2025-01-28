@@ -2318,8 +2318,8 @@ def tattersalls():
             print("Salecode input canceled.")
 
         # Adding a new column SALEYEAR
-        saleyear = request.form['saleyear']
-        df['SALEYEAR'] = saleyear
+        # Convert 'SALEYEAR' to numeric
+        df['SALEYEAR'] = pd.to_numeric(request.form['saleyear'], errors='coerce') 
 
         # Adding a new column SALETYPE
         df['SALETYPE'] = request.form['type']
@@ -2328,7 +2328,7 @@ def tattersalls():
         df['SALECODE'] = salecode
 
         # Adding a new column SALEDATE
-        df['SALEDATE'] = request.form['saledate']
+        df['SALEDATE'] = request.form['sale_dates']
 
         # Adding a new column BOOK
         book = 1
@@ -2336,6 +2336,24 @@ def tattersalls():
 
         # Adding a new column DAY
         df['DAY'] = df['Day']
+
+         # Function to update sale dates based on user input
+        def update_sale_dates(df, sale_dates_input):
+            sale_dates = [date.strip() for date in sale_dates_input.split(',')]
+            # Convert the sale dates to datetime objects
+            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d') for date in sale_dates]
+            for i, sale_date_obj in enumerate(sale_date_objects):
+                day_increment = i + 1  # Increment the day by the index (starting from 1)
+                for j, day in enumerate(df['DAY']):
+                    if not pd.isnull(day):
+                        if day == day_increment:
+                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%Y-%m-%d')
+
+        # Get sale dates from user input
+        sale_dates_input = request.form['sale_dates']
+
+        # Update sale dates
+        update_sale_dates(df, sale_dates_input)
 
         # Dropping a column SESSION
         if 'Day' in df.columns:
@@ -2381,20 +2399,30 @@ def tattersalls():
         df['TATTOO'] = tattoo
 
         # Adding a new column DATEFOAL
-        datefoal = 0000-00-00
-        df['DATEFOAL'] = datefoal
+        if 'Date Foaled' in df.columns:
+            df['DATEFOAL'] = pd.to_datetime(df['Date Foaled'], errors='coerce')
 
-        # Function to calculate the age from DATEFOAL
-        def calculate_age(Year, year_foaled):
-            age = Year - year_foaled
+        # Convert DATEFOAL to just the year as an integer
+        datefoal = df['DATEFOAL'].dt.year
+
+                # Function to calculate the age from yearfoal and datefoal
+        def calculate_age(datefoal, saleyear):
+            born_year = pd.to_numeric(datefoal, errors='coerce')  # Convert to numeric, handle invalid values
+            sale_year = saleyear  # Convert to numeric, handle invalid values
+            age = sale_year - born_year
             return age
 
-        # Calling the calculate_age() function
-        age = calculate_age(df['Year'], df['Year Foaled'])
+        # Calling the calculate_age() function with yearfoal and datefoal
+        age = calculate_age(datefoal, df['SALEYEAR'])
+        
+        print(df['SALEYEAR'].dtype)  # This should be an integer
+        print(df['DATEFOAL'].dtype)  # This should be datetime64[ns]
 
         # Adding a new column AGE
-        df['AGE'] = age.fillna(0)
-        df.drop(columns=['Year'], inplace=True)
+        df['AGE'] = age
+        
+        if 'Date Foaled' in df.columns:
+            df.drop(columns=['Date Foaled'], inplace=True)
 
         # Adding a new column COLOR
         if 'Colour' in df.columns:
@@ -2415,21 +2443,9 @@ def tattersalls():
         # Adding a new column GAIT
         gait = ''
         df['GAIT'] = gait
-
-         # Adding a new column TYPE
-        condition_covered_by = df['Covered by'].notna()
-        # condition_foal = df['Produit'] == 'foal'
-        condition_weanling = df['Year Foaled'] == saleyear
-        condition_datefoal = df['Year Foaled'] == (saleyear - 1)
-        # Define choices
-        choices = np.select(
-            [condition_covered_by, condition_weanling, condition_datefoal],
-            ['B', 'W', 'Y'],
-            default=''
-        )
         
         # Assign the result to the 'TYPE' column
-        df['TYPE'] = choices
+        df['TYPE'] = ''
 
         # Adding a new column RECORD
         record = ''
@@ -2481,7 +2497,7 @@ def tattersalls():
         df['DAMTATT'] = damtatt
 
         # Adding a new column DAMYOF
-        damyof = ''
+        damyof = 0
         df['DAMYOF'] = damyof
 
         # Adding a new column DDAMTATT
@@ -2497,8 +2513,8 @@ def tattersalls():
             df.drop(columns=['Covered by'], inplace=True)
 
         # Adding a new column LASTBRED
-        lastbred = ''
-        df['LASTBRED'] = lastbred
+        lastbred = '1901-01-01'
+        df['LASTBRED'] = pd.to_datetime(lastbred)
 
         # Adding a new column CONLNAME
         conlname = df["Consignor"]
@@ -2539,8 +2555,8 @@ def tattersalls():
         df['SBCOUNTRY'] = sbcountry
 
         # Adding a new column PRICE
-        price = df['Price (gns)']
-        df['PRICE'] = price.fillna("")
+        price = df['Price (gns)'].fillna(0.0)
+        df['PRICE'] = price
 
         # Adding a new column PRICE1
         df.drop(columns=['Price (gns)'], inplace=True)
@@ -2566,18 +2582,16 @@ def tattersalls():
         df['BREED'] = breed
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['Year Foaled'].fillna("")
+        df['YEARFOAL'] = (df['SALEYEAR'] - 1).fillna(0000)
 
         df['UTT'] = 0.0
         df['STATUS'] = ""
-        # Calculating the year of birth from the datefoal
-        datefoal_series = df['DATEFOAL']
 
-        df['TDAM'] = df['Dam']
+        df['TDAM'] = df['Dam'].fillna("")
 
-        df['tSire'] = df['Sire']
+        df['tSire'] = df['Sire'].fillna("")
 
-        df['tSireofdam'] = df['Damsire']
+        df['tSireofdam'] = df['Damsire'].fillna("")
 
         # Dropping a column SIRE1
         if 'Sire' in df.columns:
@@ -2594,10 +2608,11 @@ def tattersalls():
         df.drop(columns=['Year Foaled'], inplace=True)
         df.drop(columns=['Sale'], inplace=True)
         df.drop(columns=['Stabling'], inplace=True)
+        df.drop(columns=['Year'], inplace=True)
 
         # Save the formatted file back to the server
         formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
-        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
+        df.to_excel(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
         upload_data_to_mysql(df)
 
