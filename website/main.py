@@ -2651,6 +2651,8 @@ def arquana():
         if file_path.filename == '':
             return render_template('arquana.html', message='No selected file')
         
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+        
         # Read the selected Excel file into a DataFrame
         df = pd.read_excel(file_path)
 
@@ -2670,7 +2672,7 @@ def arquana():
             print("Salecode input canceled.")
 
         # Adding a new column SALEYEAR
-        saleyear = request.form['saleyear']
+        saleyear = int(request.form['saleyear'])
         df['SALEYEAR'] = saleyear
 
         # Adding a new column SALETYPE
@@ -2680,8 +2682,7 @@ def arquana():
         df['SALECODE'] = salecode
 
         # Adding a new column SALEDATE
-        if 'SESSION' in df.columns:
-            df['SALEDATE'] = df['SESSION']
+        df['SALEDATE'] = request.form['sale_dates']
 
         # Adding a new column BOOK
         book = 1
@@ -2696,28 +2697,34 @@ def arquana():
 
         # Adding a new column HIP
         if 'Lot' in df.columns:
-            df['HIP'] = df['Lot']
+            df['HIP'] = df['Lot'].fillna('')
 
         # Adding a new column HIPNUM
         if 'Lot' in df.columns:
-            df['HIPNUM'] = df['Lot']
+            df['HIPNUM'] = df['Lot'].fillna('')
 
         # Dropping a column HIP1
         if 'Lot' in df.columns:
             df.drop(columns=['Lot'], inplace=True)
 
-        # Check if 'NAME' is a column in the DataFrame
+        # Check if 'Nom' is a column in the DataFrame
         if 'Nom' in df.columns:
-                    # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['HORSE'] = df['Nom']
+            # Filter out rows where 'Nom' starts with 'N('
+            df_filtered = df[~df['Nom'].str.startswith('N(', na=False)]
+            
+            # Create a new 'HORSE' and 'CHORSE' column, initially set as empty string
+            df['HORSE'] = ''
+            df['CHORSE'] = ''
+            
+            # Populate the 'HORSE' and 'CHORSE' columns with 'Nom' where condition is met
+            df.loc[df_filtered.index, 'HORSE'] = df_filtered['Nom']
+            df.loc[df_filtered.index, 'CHORSE'] = df_filtered['Nom']
+            
+            # Fill NaN values with empty string ('') for any remaining missing values
+            df['HORSE'] = df['HORSE'].fillna('')
+            df['CHORSE'] = df['CHORSE'].fillna('')
         else:
             df['HORSE'] = ''
-
-        # Check if 'NAME' is a column in the DataFrame
-        if 'Nom' in df.columns:
-                    # Create a new 'HORSE' column and populate it with 'NAME'
-                    df['CHORSE'] = df['Nom']
-        else:
             df['CHORSE'] = ''
 
         # Check if 'NAME' is a column in the DataFrame
@@ -2735,26 +2742,27 @@ def arquana():
 
         # Adding a new column DATEFOAL
         datefoal = df['Date de naissance']
-        df['DATEFOAL'] = datefoal
+        df['DATEFOAL'] = pd.to_datetime(datefoal, errors='coerce').fillna(pd.to_datetime('1900-01-01'))
 
         # Function to calculate the age from DATEFOAL
-        def calculate_age(datefoal):
-            today = date.today()
-            born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
-            age = today.year - born.dt.year - ((today.month * 100 + today.day) < (born.dt.month * 100 + born.dt.day))
+        def calculate_age(saleyear, datefoal):
+            # Convert to datetime (in case it wasn't done earlier)
+            born = pd.to_datetime(datefoal, errors='coerce')  # Coerce errors to NaT (Not a Time) for invalid dates
+            age = saleyear - born.dt.year  # Extract year using .dt accessor
             return age
 
         # Calling the calculate_age() function
-        age = calculate_age(df['DATEFOAL'])
+        age = calculate_age(saleyear, df['DATEFOAL'])
 
         # Adding a new column AGE
-        df['AGE'] = age
-
+        df['AGE'] = age.fillna(0)
         df.drop(columns=['Date de naissance'], inplace=True)
 
         # Adding a new column COLOR
         if 'Colour' in df.columns:
             df['COLOR'] = df['Colour']
+        else:
+            df['COLOR'] = ""
 
         # Dropping a column COLOR1
         if 'Colour' in df.columns:
@@ -2762,7 +2770,11 @@ def arquana():
 
         # Adding a new column SEX
         if 'Sexe' in df.columns:
-            df['SEX'] = df['Sexe']
+            # Fill NA values with empty string and remove any trailing period (.)
+            df['SEX'] = df['Sexe'].fillna('').str.replace(r'\.$', '', regex=True)
+
+            # Map "M" to "C" in the SEX column
+            df['SEX'] = df['SEX'].replace('M', 'C')
 
         # Dropping a column SEX1
         if 'Sexe' in df.columns:
@@ -2775,8 +2787,8 @@ def arquana():
         # Adding a new column TYPE
         condition_covered_by = df['Pleine de'].notna()
         # condition_foal = df['Produit'] == 'foal'
-        condition_weanling = datefoal.dt.year == saleyear
-        condition_datefoal = datefoal.dt.year == (saleyear - 1)
+        condition_weanling = df['DATEFOAL'].dt.year == saleyear
+        condition_datefoal = df['DATEFOAL'].dt.year == (saleyear - 1)
         # Define choices
         choices = np.select(
             [condition_covered_by, condition_weanling, condition_datefoal],
@@ -2796,47 +2808,35 @@ def arquana():
         df['ET'] = et
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
-        df['ELIG'] = ''
+        df['ELIG'] = df['Suffixe'].fillna('')
 
         # Adding a new column SIRE
         if 'Père' in df.columns:
-            df['SIRE'] =  df['Père']
+            df['SIRE'] =  df['Père'].fillna('')
 
         # Adding a new column CSIRE
         if 'Père' in df.columns:
-            df['CSIRE'] = df['Père']
+            df['CSIRE'] = df['Père'].fillna('')
 
-        # Dropping a column SIRE1
-        if 'Père' in df.columns:
-            df.drop(columns=['Père'], inplace=True)
 
         # Adding a new column DAM
         if 'Mère' in df.columns:
-            df['DAM'] = df['Mère']
+            df['DAM'] = df['Mère'].fillna('')
 
         # Adding a new column CDAM
         if 'Mère' in df.columns:
-            df['CDAM'] = df['Mère']
-
-        # Dropping a column DAM1
-        if 'Mère' in df.columns:
-            df.drop(columns=['Mère'], inplace=True)
+            df['CDAM'] = df['Mère'].fillna('')
 
         df.drop(columns=['Produit'], inplace=True)
 
         # Adding a new column SIREOFDAM
         if 'Père de Mère' in df.columns:
-            df['SIREOFDAM'] = df['Père de Mère']
+            df['SIREOFDAM'] = df['Père de Mère'].fillna('')
 
         # Adding a new column CSIREOFDAM
         if 'Père de Mère' in df.columns:
-            df['CSIREOFDAM'] = df['Père de Mère']
+            df['CSIREOFDAM'] = df['Père de Mère'].fillna('')
 
-        # Dropping a column SIRE OF DAM
-        if 'Père de Mère' in df.columns:
-            df.drop(columns=['Père de Mère'], inplace=True)
-
-        df.drop(columns=['Issue'], inplace=True)
         df.drop(columns=['Cour / Box'], inplace=True)
         df.drop(columns=['Suffixe'], inplace=True)
         df.drop(columns=['Suffixe Père'], inplace=True)
@@ -2855,7 +2855,7 @@ def arquana():
         df['DAMTATT'] = damtatt
 
         # Adding a new column DAMYOF
-        damyof = ''
+        damyof = 0
         df['DAMYOF'] = damyof
 
         # Adding a new column DDAMTATT
@@ -2865,14 +2865,16 @@ def arquana():
         # Adding a new column BREDTO
         if 'Pleine de' in df.columns:
             df['BREDTO'] = df['Pleine de'].fillna("")
+        else:
+            df['BREDTO'] = ''
 
         # Dropping a column CONSIGNOR NAME
         if 'Pleine de' in df.columns:
             df.drop(columns=['Pleine de'], inplace=True)
 
         # Adding a new column LASTBRED
-        lastbred = ''
-        df['LASTBRED'] = lastbred
+        lastbred = '1901-01-01'
+        df['LASTBRED'] = pd.to_datetime(lastbred)
 
         # Adding a new column CONLNAME
         conlname = df["Vendeur"]
@@ -2894,11 +2896,20 @@ def arquana():
         df['PURFNAME'] = purfname
 
         # Adding a new column PURLNAME
-        purlname = df['Acheteur']
-        df['PURLNAME'] = purlname
+        purlname = df['Acheteur'].fillna('')  # Fill NaN values with empty string
+
+        # Check if "Racheté" is in the 'issue' column and set 'PURLNAME' to "RNA" where found
+        df['PURLNAME'] = purlname  # Start by copying 'Acheteur' to 'PURLNAME'
+        df['PURLNAME'] = df.apply(
+            lambda row: 'RNA' if 'Racheté' in str(row['Issue']) else (row['PURLNAME'] if row['PURLNAME'] else ''), 
+            axis=1
+        )
 
         # Dropping a column PURCHASER
         df.drop(columns=['Acheteur'], inplace=True)
+
+        # Dropping a column ISSUE
+        df.drop(columns=['Issue'], inplace=True)
 
         # Adding a new column SBCITY
         sbcity = ''
@@ -2914,7 +2925,7 @@ def arquana():
 
         # Adding a new column PRICE
         price = df['Enchères']
-        df['PRICE'] = price
+        df['PRICE'] = price.fillna(0.0)
 
         # Adding a new column PRICE1
         df.drop(columns=['Enchères'], inplace=True)
@@ -2925,7 +2936,7 @@ def arquana():
 
         # Adding a new column URL
         url = ''
-        df['URL'] = url.fillna('')
+        df['URL'] = url
 
         # Adding a new column NFFM
         nffm = ''
@@ -2933,20 +2944,39 @@ def arquana():
 
         # Adding a new column PRIVATE SALE
         privatesale = ''
-        df['PRIVATESALE'] = privatesale.fillna('')
+        df['PRIVATESALE'] = privatesale
             
         # Adding a new column BREED
         breed = 'T'
         df['BREED'] = breed
 
-        # Calculating the year of birth from the datefoal
-        datefoal_series = df['DATEFOAL'].dt.year
-
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['DATEFOAL'].dt.year
+        df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna(0000)
 
         df['UTT'] = 0.0
         df['STATUS'] = ""
+
+        df['TDAM'] = df['Mère'].fillna("")
+
+        df['tSire'] = df['Père'].fillna("")
+
+        df['tSireofdam'] = df['Père de Mère'].fillna("")
+
+        # Dropping a column SIRE1
+        if 'Père' in df.columns:
+            df.drop(columns=['Père'], inplace=True)
+
+        # Dropping a column DAM1
+        if 'Mère' in df.columns:
+            df.drop(columns=['Mère'], inplace=True)
+
+        # Dropping a column SIRE OF DAM
+        if 'Père de Mère' in df.columns:
+            df.drop(columns=['Père de Mère'], inplace=True)
+
+        # Save the formatted file back to the server
+        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
+        df.to_excel(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
 
         upload_data_to_mysql(df)
 
