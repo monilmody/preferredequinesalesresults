@@ -1255,10 +1255,10 @@ def goffs():
             df.drop(columns=['SESSION'], inplace=True)
 
         # Adding a new column HIP
-        df['HIP'] = df['Lot']
+        df['HIP'] = df['Lot'].fillna('')
 
         # Adding a new column HIPNUM
-        df['HIPNUM'] = df['Lot']
+        df['HIPNUM'] = df['Lot'].fillna('')
 
         # Dropping a column HIP1
         if 'Lot' in df.columns:
