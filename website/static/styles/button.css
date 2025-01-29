@@ -15,10 +15,13 @@
   padding: 0;
   line-height: 50px;
   text-align: center;
-  text-decoration:solid !important;
+  text-decoration: solid !important;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .button-73:hover {
@@ -28,6 +31,23 @@
 .button-73:active {
   box-shadow: #422800 2px 2px 0 0;
   transform: translate(2px, 2px);
+}
+
+/* Add a simple arrow icon at the end of the button */
+.button-73::after {
+  content: '→'; /* Simple right arrow */
+  font-size: 1.5em; /* Adjust size */
+  color: #422800;
+  position: absolute;
+  right: 10px; /* Position arrow towards the end */
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.3s ease;
+}
+
+/* Change arrow color on hover for better interaction */
+.button-73:hover::after {
+  color: #fbeee0;
 }
 
 @media (min-width: 768px) {
