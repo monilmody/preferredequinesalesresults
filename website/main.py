@@ -71,7 +71,7 @@ def handle_file_upload(request):
     
 def upload_data_to_mysql(df):
     global csv_data
-    db_host = "db-backup-restore.cdq66kiey6co.us-east-1.rds.amazonaws.com"
+    db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
     db_name = "horse"
     db_user = "preferredequine"
     db_pass = "914MoniMaker77$$"
@@ -79,7 +79,7 @@ def upload_data_to_mysql(df):
     try:
         print("1")
         # Create a MySQL engine
-        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}")
+        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4", connect_args={"collation": "utf8mb4_general_ci"})
 
         # Create a session factory
         Session = sessionmaker(bind=engine)
@@ -151,7 +151,7 @@ def upload_data_to_mysql(df):
             ELIG = Column(String(3))
             BREDTO = Column(String(20))
             LASTBRED = Column(Date)
-            CONSLNAME = Column(String(120))
+            CONSLNAME = Column(String(150))
             CONSNO = Column(String(20))
             PEMCODE = Column(String(15))
             PURFNAME = Column(String(30))
@@ -191,9 +191,6 @@ def upload_data_to_mysql(df):
             DAMYOF = Column(Integer, nullable=True, default=0)
             DDAMTATT = Column(String(6))
             tsales = relationship("main_Tsales", back_populates="tdamsire")
-
-        # Drop the tables if they already exist
-        Base.metadata.drop_all(engine)
 
         # Define tables
         Base.metadata.create_all(engine)
