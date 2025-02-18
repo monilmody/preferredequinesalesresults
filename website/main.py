@@ -71,7 +71,7 @@ def handle_file_upload(request):
     
 def upload_data_to_mysql(df):
     global csv_data
-    db_host = "preferred-equine-database.cdq66kiey6co.us-east-1.rds.amazonaws.com"
+    db_host = "db-backup-restore.cdq66kiey6co.us-east-1.rds.amazonaws.com"
     db_name = "horse"
     db_user = "preferredequine"
     db_pass = "914MoniMaker77$$"
