@@ -151,7 +151,7 @@ def upload_data_to_mysql(df):
             ELIG = Column(String(3))
             BREDTO = Column(String(20))
             LASTBRED = Column(Date)
-            CONSLNAME = Column(String(60))
+            CONSLNAME = Column(String(120))
             CONSNO = Column(String(20))
             PEMCODE = Column(String(15))
             PURFNAME = Column(String(30))
@@ -344,7 +344,7 @@ def keenland():
                 for j, day in enumerate(df['DAY']):
                     if not pd.isnull(day):
                         if day == day_increment:
-                            df.at[j, 'SALEDATE'] = sale_date_obj.strftime('%Y-%m-%d')
+                            df.at[j, 'SALEDATE'] = sale_date_obj
 
         # Get sale dates from user input
         sale_dates_input = request.form['sale_dates']
