@@ -192,6 +192,8 @@ def upload_data_to_mysql(df):
             DDAMTATT = Column(String(6))
             tsales = relationship("main_Tsales", back_populates="tdamsire")
 
+        # Drop the tables if they already exist
+        Base.metadata.drop_all(engine)
 
         # Define tables
         Base.metadata.create_all(engine)
