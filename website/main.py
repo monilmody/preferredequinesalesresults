@@ -20,6 +20,76 @@ app = Flask(__name__)
 app.register_blueprint(views, url_prefix="/views")
 
 Base = declarative_base()
+
+# Define the table schema for tsales
+class main_Tsales(Base):
+    __tablename__ = 'tsales'
+    __table_args__ = {'extend_existing': True}
+    SALE_ID = Column(Integer, primary_key=True, autoincrement=True)
+    SALEYEAR = Column(Integer)
+    SALETYPE = Column(String(1))
+    SALECODE = Column(String(20))
+    SALEDATE = Column(Date)
+    BOOK = Column(String(2))
+    DAY = Column(Integer)
+    HIP = Column(String(10))
+    HIPNUM = Column(String(10))
+    HORSE = Column(String(35))
+    CHORSE = Column(String(35))
+    RATING = Column(String(5))
+    TATTOO = Column(String(6))
+    DATEFOAL = Column(Date)
+    AGE = Column(Integer)
+    COLOR = Column(String(5))
+    SEX = Column(String(3))
+    GAIT = Column(String(3))
+    TYPE = Column(String(3))
+    RECORD = Column(String(25))
+    ET = Column(String(1))
+    ELIG = Column(String(3))
+    BREDTO = Column(String(20))
+    LASTBRED = Column(Date)
+    CONSLNAME = Column(String(150))
+    CONSNO = Column(String(20))
+    PEMCODE = Column(String(15))
+    PURFNAME = Column(String(30))
+    PURLNAME = Column(String(70))
+    SBCITY = Column(String(25))
+    SBSTATE = Column(String(10))
+    SBCOUNTRY = Column(String(15))
+    PRICE = Column(Float)
+    CURRENCY = Column(String(3))
+    URL = Column(String(150))
+    NFFM = Column(String(2))
+    PRIVATESALE = Column(String(2))
+    BREED = Column(String(2))
+    YEARFOAL = Column(Integer)
+    UTT = Column(String(255))
+    STATUS = Column(String(255))
+    TDAM = Column(String(255))
+    tSire = Column(String(255))
+    tSireofdam = Column(String(255))
+    DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
+    tdamsire = relationship("main_Tdamsire", back_populates="tsales")
+
+# Define the table schema for tdamsire
+class main_Tdamsire(Base):
+    __tablename__ = 'tdamsire'
+    __table_args__ = {'extend_existing': True}
+    DAMSIRE_ID = Column(Integer, primary_key=True, autoincrement=True)
+    SIRE = Column(String(50))
+    CSIRE = Column(String(50))
+    DAM = Column(String(50))
+    CDAM = Column(String(50))
+    SIREOFDAM = Column(String(50))
+    CSIREOFDAM = Column(String(50))
+    DAMOFDAM = Column(String(50))
+    CDAMOFDAM = Column(String(50))
+    DAMTATT = Column(String(6))
+    DAMYOF = Column(Integer, nullable=True, default=0)
+    DDAMTATT = Column(String(6))
+    tsales = relationship("main_Tsales", back_populates="tdamsire")
+
 csv_data = pd.DataFrame({})
 
 UPLOAD_FOLDER = 'uploads/'  # Path to the upload directory
@@ -123,80 +193,12 @@ def upload_data_to_mysql(df):
         session.execute(insert_file_sql, {'file_name': filename_without_extension})
         session.commit()
         print("3")
-        # Define the table schema for tsales
-        class main_Tsales(Base):
-            __tablename__ = 'tsales'
-            __table_args__ = {'extend_existing': True}
-            SALE_ID = Column(Integer, primary_key=True, autoincrement=True)
-            SALEYEAR = Column(Integer)
-            SALETYPE = Column(String(1))
-            SALECODE = Column(String(20))
-            SALEDATE = Column(Date)
-            BOOK = Column(String(2))
-            DAY = Column(Integer)
-            HIP = Column(String(10))
-            HIPNUM = Column(String(10))
-            HORSE = Column(String(35))
-            CHORSE = Column(String(35))
-            RATING = Column(String(5))
-            TATTOO = Column(String(6))
-            DATEFOAL = Column(Date)
-            AGE = Column(Integer)
-            COLOR = Column(String(5))
-            SEX = Column(String(3))
-            GAIT = Column(String(3))
-            TYPE = Column(String(3))
-            RECORD = Column(String(25))
-            ET = Column(String(1))
-            ELIG = Column(String(3))
-            BREDTO = Column(String(20))
-            LASTBRED = Column(Date)
-            CONSLNAME = Column(String(150))
-            CONSNO = Column(String(20))
-            PEMCODE = Column(String(15))
-            PURFNAME = Column(String(30))
-            PURLNAME = Column(String(70))
-            SBCITY = Column(String(25))
-            SBSTATE = Column(String(10))
-            SBCOUNTRY = Column(String(15))
-            PRICE = Column(Float)
-            CURRENCY = Column(String(3))
-            URL = Column(String(150))
-            NFFM = Column(String(2))
-            PRIVATESALE = Column(String(2))
-            BREED = Column(String(2))
-            YEARFOAL = Column(Integer)
-            UTT = Column(String(255))
-            STATUS = Column(String(255))
-            TDAM = Column(String(255))
-            tSire = Column(String(255))
-            tSireofdam = Column(String(255))
-            DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
-            # tdamsire = relationship("main_Tdamsire", back_populates="tsales")
-
-        # Define the table schema for tdamsire
-        class main_Tdamsire(Base):
-            __tablename__ = 'tdamsire'
-            __table_args__ = {'extend_existing': True}
-            DAMSIRE_ID = Column(Integer, primary_key=True, autoincrement=True)
-            SIRE = Column(String(50))
-            CSIRE = Column(String(50))
-            DAM = Column(String(50))
-            CDAM = Column(String(50))
-            SIREOFDAM = Column(String(50))
-            CSIREOFDAM = Column(String(50))
-            DAMOFDAM = Column(String(50))
-            CDAMOFDAM = Column(String(50))
-            DAMTATT = Column(String(6))
-            DAMYOF = Column(Integer, nullable=True, default=0)
-            DDAMTATT = Column(String(6))
-            tsales = relationship("main_Tsales", back_populates="tdamsire")
 
         # Define tables
         Base.metadata.create_all(engine)
 
         # Define the relationship after both classes have been defined
-        main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
+        # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the columns you want to insert into each table
         columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam"]
@@ -219,7 +221,6 @@ def upload_data_to_mysql(df):
                     except (MySQLError, Exception) as e:
                         session.rollback()
                         print(f"Error: {str(e)}")
-                        retries += 1
                         time.sleep(2)  # Wait for a few seconds before retrying
                         continue
 
@@ -463,11 +464,9 @@ def keenland():
         df['ET'] = et
 
         # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
-        if 'Elig' in df.columns:
-            df['ELIG'] = df['Elig'].fillna("")
+        df['ELIG'] = df['Elig'].fillna("")
 
-        if 'Elig' in df.columns:
-            df.drop(columns=['Elig'], inplace=True)
+        df.drop(columns=['Elig'], inplace=True)
 
         # Adding a new column SIRE
         df['SIRE'] =  df['Sire']
