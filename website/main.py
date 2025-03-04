@@ -943,7 +943,7 @@ def fasigTipton():
         else:
             # Check if the 'AGE' column exists and apply the condition for AGE == 2
             if 'AGE' in df.columns:
-                df['TYPE'] = df['AGE'].apply(lambda x: 'R' if x == 2 else '')
+                df['TYPE'] = df['AGE'].apply(lambda x: 'R' if x == 2 else 'Y')
             else:
                 df['TYPE'] = "Y"  # If 'AGE' column doesn't exist, set TYPE to empty string
 
