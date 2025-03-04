@@ -941,7 +941,10 @@ def fasigTipton():
         if 'SOLD AS CODE' in df.columns:
             df['TYPE'] = df['SOLD AS CODE']
         else: 
-            df['TYPE'] = 'Y'
+            if 'AGE' == 2:
+                df['TYPE'] = 'R'
+            else:
+                df['TYPE'] = ""
 
         # Adding a new column RECORD
         record = ''
