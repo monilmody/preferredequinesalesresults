@@ -1164,10 +1164,12 @@ def fasigTipton():
         datefoal_series = df['DATEFOAL']
 
         # Dropping a column BARN
-        df.drop(columns=['BARN'], inplace=True)
+        if 'BARN' in df.columns:
+            df.drop(columns=['BARN'], inplace=True)
 
         # Dropping a column COVER DATE
-        df.drop(columns=['COVER DATE'], inplace=True)
+        if 'COVER DATE' in df.columns:
+            df.drop(columns=['COVER DATE'], inplace=True)
 
         # Dropping a column SOLD AS CODE
         if 'SOLD AS CODE' in df.columns:
@@ -1177,13 +1179,16 @@ def fasigTipton():
             df.drop(columns=['COVERING SIRE'], inplace=True)
 
         # Dropping a column SOLD AS DESCRIPTION
-        df.drop(columns=['SOLD AS DESCRIPTION'], inplace=True)
+        if 'SOLD AS DESCRIPTION' in df.columns:
+            df.drop(columns=['SOLD AS DESCRIPTION'], inplace=True)
 
         # Dropping a column FOALED
-        df.drop(columns=['FOALED'], inplace=True)
+        if 'FOALED' in df.columns:
+            df.drop(columns=['FOALED'], inplace=True)
 
         # Dropping a column PRIVATE SALE
-        df.drop(columns=['PRIVATE SALE'], inplace=True)
+        if 'PRIVATE SALE' in df.columns:
+            df.drop(columns=['PRIVATE SALE'], inplace=True)
 
         # Save the formatted file back to the server
         formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
