@@ -1055,7 +1055,7 @@ def fasigTipton():
             df.drop(columns=['COVERING SIRE'], inplace=True)
 
         if 'COVER DATE' in df.columns:
-            df['LASTBRED'] = pd.to_datetime(df['COVER DATE'].fillna("1901-01-01"))
+            df['LASTBRED'] = pd.to_datetime(df['COVER DATE']).fillna(pd.to_datetime("1901-01-01"))
         
         # Adding a new column CONLNAME
         conlname = df['PROPERTY LINE']
