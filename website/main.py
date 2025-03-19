@@ -1049,6 +1049,8 @@ def fasigTipton():
         # Adding a new column BREDTO
         if 'COVERING SIRE' in df.columns:
             df['BREDTO'] = df['COVERING SIRE'].fillna("")
+        else:
+            df['BREDTO'] = ""
 
         # Dropping a column CONSIGNOR NAME
         if 'COVERING SIRE' in df.columns:
