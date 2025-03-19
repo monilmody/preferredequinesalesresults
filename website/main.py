@@ -1177,6 +1177,9 @@ def fasigTipton():
         if 'COVERING SIRE' in df.columns:
             df.drop(columns=['COVERING SIRE'], inplace=True)
 
+        if 'CONSIGNOR NAME' in df.columns:
+            df.drop(columns=['CONSIGNOR NAME'], inplace=True)
+
         # Dropping a column SOLD AS DESCRIPTION
         if 'SOLD AS DESCRIPTION' in df.columns:
             df.drop(columns=['SOLD AS DESCRIPTION'], inplace=True)
