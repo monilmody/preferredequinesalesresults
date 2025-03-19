@@ -1047,16 +1047,15 @@ def fasigTipton():
         df['DDAMTATT'] = ddamtatt
 
         # Adding a new column BREDTO
-        if 'CONSIGNOR NAME' in df.columns:
-            df['BREDTO'] = df['CONSIGNOR NAME']
-        else:
-            df['BREDTO'] = ''
-        # Dropping a column CONSIGNOR NAME
-        if 'CONSIGNOR NAME' in df.columns:
-            df.drop(columns=['CONSIGNOR NAME'], inplace=True)
+        if 'COVERING SIRE' in df.columns:
+            df['BREDTO'] = df['COVERING SIRE'].fillna("")
 
-        lastbred = '1901-01-01'
-        df['LASTBRED'] = pd.to_datetime(lastbred)
+        # Dropping a column CONSIGNOR NAME
+        if 'COVERING SIRE' in df.columns:
+            df.drop(columns=['COVERING SIRE'], inplace=True)
+
+        if 'COVER DATE' in df.columns:
+            df['LASTBRED'] = pd.to_datetime(df['COVER DATE'].fillna("1901-01-01"))
         
         # Adding a new column CONLNAME
         conlname = df['PROPERTY LINE']
