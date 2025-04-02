@@ -889,14 +889,30 @@ def fasigTipton():
 
         # Adding a new column DATEFOAL
         if 'YEAR OF BIRTH' in df.columns:
-            df['DATEFOAL'] = pd.to_datetime(df['YEAR OF BIRTH'])
+            def process_year_of_birth(year_of_birth):
+                # Convert the value to string to ensure consistency
+                year_of_birth_str = str(year_of_birth)
+                
+                # If the value is just a year (length 4), convert to int and set default date
+                if len(year_of_birth_str) == 4 and year_of_birth_str.isdigit():
+                    year = int(year_of_birth_str)  # Convert to int
+                    datefoal = pd.to_datetime('1900-01-01')  # Default date for year-only entries
+                else:
+                    # Otherwise, it's a full date, so convert it to datetime
+                    year = pd.to_datetime(year_of_birth_str, errors='coerce').year
+                    datefoal = pd.to_datetime(year_of_birth_str, errors='coerce')  # Full date
+                
+                return year, datefoal
+
+            # Apply the processing function
+            df[['YEARFOAL', 'DATEFOAL']] = df['YEAR OF BIRTH'].apply(lambda x: pd.Series(process_year_of_birth(x)))
 
         # Dropping a column YEAR OF BIRTH
         if 'YEAR OF BIRTH' in df.columns:
             df.drop(columns=['YEAR OF BIRTH'], inplace=True)
 
         # Adding a new column YEARFOAL and getting the year from DATEFOAL
-        df['YEARFOAL'] = df['DATEFOAL'].dt.year
+        # df['YEARFOAL'] = df['DATEFOAL'].dt.year
         
         # Function to calculate the age from yearfoal and datefoal
         def calculate_age(yearfoal, saleyear):
