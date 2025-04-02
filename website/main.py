@@ -810,11 +810,17 @@ def fasigTipton():
 
         # Adding a new column SALEDATE
         if 'SESSION' in df.columns:
-            # Convert 'SESSION' to datetime with the original format
-            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y', errors='coerce')
-            
+            # Convert 'SESSION' to datetime, allowing time or just the date
+            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y %H:%M', errors='coerce')  # with time format
+
+            # If the time format does not match, try to convert it just to date
+            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y', errors='coerce').fillna(df['SALEDATE'])
+
+            # Extract only the date part (ignoring time) if time exists
+            df['SALEDATE'] = df['SALEDATE'].dt.date
+
             # Format 'SALEDATE' to 'YYYY-MM-DD' for MySQL compatibility
-            df['SALEDATE'] = df['SALEDATE'].dt.strftime('%Y-%m-%d')
+            df['SALEDATE'] = df['SALEDATE'].apply(lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else '')
 
         # Adding a new column BOOK
         book = 1
@@ -827,36 +833,24 @@ def fasigTipton():
         counter_values = []
 
         # Iterate through the list of dates
-        for i, date_str in enumerate(df['SESSION']):
+        prev_date = None  # Initialize the previous date variable
+        for i, date_str in enumerate(df['SALEDATE']):
             try:
-                if '/' in date_str:
-                    # Split the date string into month, day, and year parts
-                    month_str, day_str, year_str = date_str.split('/')
-                    
-                    # Add leading zeros if needed
-                    month_str = month_str.zfill(2)
-                    day_str = day_str.zfill(2)
-                    
-                    # Combine the parts back into a formatted date string
-                    formatted_date_str = f'{year_str}-{month_str}-{day_str}'
-                else:
-                    # The date string is already in the desired format
-                    formatted_date_str = date_str
+                # Use the correct date format here (now the column should be in 'YYYY-MM-DD' format)
+                date1 = datetime.strptime(date_str, '%Y-%m-%d')
                 
-                # Convert the formatted date string to a datetime object
-                date1 = datetime.strptime(formatted_date_str, '%Y-%m-%d')
-                
-                # Convert the datetime object to the desired format
+                # Convert the datetime object back to string for consistency
                 formatted_date_str = date1.strftime('%Y-%m-%d')
                 
                 # Check if this is the first date or if the date has changed from the previous one
                 if i == 0 or formatted_date_str != prev_date:
                     counter += 1  # Increment the counter when the date changes
                     prev_date = formatted_date_str  # Update the previous date
-                    
+                
                 counter_values.append(counter)
             except ValueError:
                 print(f"Invalid date format or value at index {i}: {date_str}")
+
 
         # Adding a new column DAY
         df['DAY'] = counter_values
@@ -1105,7 +1099,11 @@ def fasigTipton():
         df.drop(columns=['PRICE1'], inplace=True)
 
         # Adding a new column SALE TITLE
-        df.drop(columns=['SALE TITLE'], inplace=True)
+        if "SALE TITLE" in df.columns:
+            df.drop(columns=['SALE TITLE'], inplace=True)
+
+        if "SALE_TITLE" in df.columns:
+            df.drop(columns=['SALE_TITLE'], inplace=True)
 
         # Adding a new column CURRENCY
         currency = ''
