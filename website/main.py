@@ -1125,6 +1125,9 @@ def fasigTipton():
         currency = ''
         df['CURRENCY'] = currency
 
+        if "URL" in df.columns:
+            df.drop(columns=['URL'], inplace=True)
+
         # Adding a new column URL
         url = df['VIRTUAL INSPECTION'] 
         df['URL'] = url.fillna('')
