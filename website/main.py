@@ -957,6 +957,10 @@ def fasigTipton():
             else:
                 df['TYPE'] = "Y"  # If 'AGE' column doesn't exist, set TYPE to empty string
 
+        # Convert TYPE from 'Y' to 'W' for horses sold in January or February
+        if 'SALE_DATE' in df.columns:
+            df['TYPE'] = df.apply(lambda row: 'W' if pd.to_datetime(row['SALE_DATE']).month in [1, 2] and row['TYPE'] == 'Y' else row['TYPE'], axis=1)
+        
         # Adding a new column RECORD
         record = ''
         df['RECORD'] = record
