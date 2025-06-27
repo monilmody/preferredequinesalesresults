@@ -69,6 +69,8 @@ class main_Tsales(Base):
     TDAM = Column(String(255))
     tSire = Column(String(255))
     tSireofdam = Column(String(255))
+    FARMNAME = Column(String(255))
+    FARMCODE = Column(String(255))
     DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
     tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
@@ -656,7 +658,14 @@ def keenland():
         # Adding a new column SIREOFDAM
         df['tSireofdam'] = df['Sire Of Dam'].fillna("")
 
-        
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
+
         # Dropping columns Broodmare Sire and Sire Of Dam
         if 'Broodmare Sire' in df.columns:
             df.drop(columns=['Broodmare Sire'], inplace=True)
@@ -1162,6 +1171,14 @@ def fasigTipton():
         df['tSire'] = df['SIRE1']
 
         df['tSireofdam'] = df['SIRE OF DAM']
+
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
         
         if 'SIRE1' in df.columns:
             df.drop(columns=['SIRE1'], inplace=True)
@@ -1529,6 +1546,14 @@ def goffs():
 
         df['tSireofdam'] = ''
 
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
+
         # Dropping a column SOLD AS CODE
         if 'Stabling' in df.columns:
             df.drop(columns=['Stabling'], inplace=True)
@@ -1874,6 +1899,14 @@ def obs():
         df['tSire'] =  df['sire_name'].fillna("")
         df['TDAM'] = df['dam_name'].fillna("")
         df['tSireofdam'] = df['dam_sire'].fillna("")
+
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
 
         # Dropping a column SIRE1
         if 'sire_name' in df.columns:
@@ -2301,6 +2334,14 @@ def obs_old():
         else:
             df['tSireofdam'] = ""
 
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
+
         # Dropping a column SIRE1
         if 'Sire' in df.columns:
             df.drop(columns=['Sire'], inplace=True)
@@ -2639,6 +2680,14 @@ def tattersalls():
         df['tSire'] = df['Sire'].fillna("")
 
         df['tSireofdam'] = df['Damsire'].fillna("")
+
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
 
         # Dropping a column SIRE1
         if 'Sire' in df.columns:
@@ -2993,6 +3042,14 @@ def arquana():
         df['tSire'] = df['Père'].fillna("")
 
         df['tSireofdam'] = df['Père de Mère'].fillna("")
+
+        # Adding a new column FARMNAME
+        farmname = ''
+        df['FARMNAME'] = farmname
+
+        # Adding a new column FARMNAME
+        farmcode = ''
+        df['FARMCODE'] = farmcode
 
         # Dropping a column SIRE1
         if 'Père' in df.columns:
