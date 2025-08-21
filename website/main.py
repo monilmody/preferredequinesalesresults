@@ -12,7 +12,10 @@ from mysql.connector import Error as MySQLError
 import sys
 import re
 import os
+import boto3
 from werkzeug.utils import secure_filename
+from botocore.exceptions import ClientError
+import logging
 
 print(sys.executable)
 
@@ -94,10 +97,51 @@ class main_Tdamsire(Base):
 
 csv_data = pd.DataFrame({})
 
-UPLOAD_FOLDER = 'uploads/'  # Path to the upload directory
+S3_BUCKET = 'horse-list-photos-and-details'
+ROLE_ARN = 'arn:aws:iam::211125609145:role/python-website-logs'  # Replace with your IAM Role ARN
+SESSION_NAME = 'MySession'
+
+UPLOAD_FOLDER = '/tmp'  # Path to the upload directory
 # Set the UPLOAD_FOLDER in the app's configuration
-app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')  # Or any path you prefer
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), UPLOAD_FOLDER)  # Or any path you prefer
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}  # Allowed file types: CSV and Excel
+
+sts_client = boto3.client('sts')
+
+def assume_role():
+    """Assume an IAM role and return temporary credentials."""
+    try:
+        response = sts_client.assume_role(
+            RoleArn=ROLE_ARN,
+            RoleSessionName=SESSION_NAME
+        )
+
+        credentials = response['Credentials']
+        print(f"Assumed role credentials: AccessKey={credentials['AccessKeyId']}, SecretKey={credentials['SecretAccessKey']}, SessionToken={credentials['SessionToken']}")
+        
+        # Return the temporary credentials
+        return credentials['AccessKeyId'], credentials['SecretAccessKey'], credentials['SessionToken']
+    except ClientError as e:
+        logging.error(f"Error assuming role: {str(e)}")
+        raise Exception("An error occurred while assuming the IAM role.")
+ 
+def create_s3_client():
+    """Create an S3 client using assumed IAM role credentials."""
+    access_key, secret_key, session_token = assume_role()
+
+    # Log the credentials (for debugging purposes)
+    print(f"AccessKeyId: {access_key}")
+    print(f"SecretAccessKey: {secret_key}")
+    print(f"SessionToken: {session_token}")
+
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        aws_session_token=session_token
+    )
+    
+    return s3_client
 
 def allowed_file(filename):
     """Check if the uploaded file is either a CSV or Excel file."""
@@ -120,20 +164,27 @@ def handle_file_upload(request):
         # Ensure the file has an allowed extension (CSV or Excel)
         if file and allowed_file(file.filename):
             # Use SALECODE as the filename (add .csv or .xlsx extension based on file type)
-            filename = file.filename  # Use the original filename for now
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-             # Check if a file with the same SALECODE already exists
-            if os.path.exists(file_path):
-                os.remove(file_path)  # Remove the old file before saving the new one
-            try:
-                file.save(file_path)
-                print(f"File successfully saved to: {file_path}")
-            except Exception as e:
-                print(f"Error saving file: {e}")
+            # filename = file.filename  # Use the original filename for now
+            # file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-            # After saving, process or format the file (this can be any format operation you want)
-          # Format the file (e.g., drop columns, modify data)
-            return file_path
+            # Sanitize and generate a safe filename
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+                        # Save the file temporarily
+            file.save(file_path)
+
+            # Now upload the file to S3 using the assumed role credentials
+            s3_client = create_s3_client()  # Create the S3 client with assumed role credentials
+            s3_file_path = f"horse_data/{filename}"  # Path in S3
+
+            # Upload the file to the S3 bucket
+            s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
+            print(f"File successfully uploaded to S3: {s3_file_path}")
+                        
+            # You can save this URL in your database, if required for reference.
+            return filename
+
         else:
             raise ValueError("Invalid file type")
 
@@ -276,15 +327,24 @@ def keenland():
     try:
         if 'file' not in request.files:
             return render_template('keenland.html', message='No file path')
+        
         file = request.files['file']
 
         if file.filename == '':
             return render_template('keenland.html', message='No selected file')
 
-        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+        file_name = handle_file_upload(request)  # This handles the file upload and returns the file path
 
-        # Read the selected Excel file into a DataFrame
-        df = pd.read_csv(file_path)
+        s3_file_path = f"horse_data/{file_name}"
+
+        # Now download the file from S3 to process it
+        s3_client = create_s3_client()
+        temp_file_path = f"/tmp/{file_name}"
+
+        s3_client.download_file(S3_BUCKET, s3_file_path, temp_file_path)
+        
+        # Now read the file (we assume CSV here)
+        df = pd.read_csv(temp_file_path)
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -742,12 +802,23 @@ def keenland():
             df.drop(columns=['Breeders Cup Eligible'], inplace=True)
             
         print("reached here 1")
-        # Save the formatted file back to the server
-        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
-        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
+
+  # Save the formatted file back to the temporary location
+        formatted_file_path = f"/tmp/formatted_{file_name}"
+        df.to_csv(formatted_file_path, index=False)
+
+        # Upload the formatted file back to S3
+        formatted_s3_path = f"horse_data/formatted_{file_name}"
+        s3_client.upload_file(formatted_file_path, S3_BUCKET, formatted_s3_path)
+
+        # Clean up the temporary files after upload
+        os.remove(temp_file_path)
+        os.remove(formatted_file_path)
 
         upload_data_to_mysql(df)
+
         # Engine.execute("COMMIT;") 
+
         print("reached here 2")
         return render_template("keenland.html", message='File uploaded to database successfully', data=df.to_html())
 
