@@ -117,7 +117,6 @@ def assume_role():
         )
 
         credentials = response['Credentials']
-        print(f"Assumed role credentials: AccessKey={credentials['AccessKeyId']}, SecretKey={credentials['SecretAccessKey']}, SessionToken={credentials['SessionToken']}")
         
         # Return the temporary credentials
         return credentials['AccessKeyId'], credentials['SecretAccessKey'], credentials['SessionToken']
@@ -128,11 +127,6 @@ def assume_role():
 def create_s3_client():
     """Create an S3 client using assumed IAM role credentials."""
     access_key, secret_key, session_token = assume_role()
-
-    # Log the credentials (for debugging purposes)
-    print(f"AccessKeyId: {access_key}")
-    print(f"SecretAccessKey: {secret_key}")
-    print(f"SessionToken: {session_token}")
 
     s3_client = boto3.client(
         's3',
@@ -843,8 +837,18 @@ def fasigTipton():
         
         file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
         
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+
+        s3_file_path = f"horse_data/{file_path}"
+
+        # Now download the file from S3 to process it
+        s3_client = create_s3_client()
+        temp_file_path = f"/tmp/{file_path}"
+
+        s3_client.download_file(S3_BUCKET, s3_file_path, temp_file_path)
+
         # Read the selected Excel file into a DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(temp_file_path)
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -1304,8 +1308,16 @@ def fasigTipton():
             df.drop(columns=['PRIVATE SALE'], inplace=True)
 
         # Save the formatted file back to the server
-        formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{os.path.basename(file_path)}")
-        df.to_csv(formatted_file_path, index=False)  # Save the formatted DataFrame to CSV
+        formatted_file_path = f"/tmp/formatted_{file_path}"
+        df.to_csv(formatted_file_path, index=False)
+
+        # Upload the formatted file back to S3
+        formatted_s3_path = f"horse_data/formatted_{file_path}"
+        s3_client.upload_file(formatted_file_path, S3_BUCKET, formatted_s3_path)
+
+        # Clean up the temporary files after upload
+        os.remove(temp_file_path)
+        os.remove(formatted_file_path)
 
         upload_data_to_mysql(df)
 
