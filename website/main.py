@@ -2895,9 +2895,8 @@ def arquana():
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
 
-        # Function to update sale dates and corresponding day column based on user input
+         # Function to update sale dates and corresponding day column based on user input
         def update_sale_dates(df, sale_dates_input, hip_ranges_input):
-            # Split input strings by commas and strip extra spaces
             sale_dates = [date.strip() for date in sale_dates_input.split(',')]
             hip_ranges = [range.strip() for range in hip_ranges_input.split(',')]
             
@@ -2906,34 +2905,24 @@ def arquana():
             
             # Initialize a dictionary to store hip ranges and corresponding sale dates and days
             hip_range_data = {}
-            
-            # Iterate over the ranges and sale dates
             for i, hip_range in enumerate(hip_ranges):
-                start, end = map(int, hip_range.split('-'))  # Convert the range to integers
-                
-                # For each hip number in the range, assign the sale date and day
+                start, end = map(int, hip_range.split('-'))
                 for hip_number in range(start, end + 1):
                     hip_range_data[hip_number] = {'sale_date': sale_date_objects[i], 'day': i + 1}
             
-            # Update SALEDATE and DAY based on hip_range_data
-            for hip_number, data in hip_range_data.items():
-                # Check if 'Lot' matches the hip_number and update SALEDATE and DAY
-                df.loc[df['Lot'] == hip_number, 'SALEDATE'] = data['sale_date']
-                df.loc[df['Lot'] == hip_number, 'DAY'] = data['day']
+            # Initialize DAY column to 0
+            df['DAY'] = 0
             
-            # Optional: Print out invalid lot numbers if needed
-            invalid_hips = df[df['SALEDATE'].isna()]
-            if not invalid_hips.empty:
-                print(f"Invalid Lot numbers: {invalid_hips['Lot'].tolist()}")
+            # Update SALEDATE and DAY columns
+            for hip_number, data in hip_range_data.items():
+                df.loc[df['hip_number'] == hip_number, 'SALEDATE'] = data['sale_date']
+                df.loc[df['hip_number'] == hip_number, 'DAY'] = data['day']
 
-        # Assuming the user inputs are passed as 'sale_dates_input' and 'hip_ranges_input'
-        # These could come from your frontend as part of a POST request or form submission
-        sale_dates_input = request.form['sale_dates']  # Comma-separated list of dates (e.g., "2025-09-01,2025-09-02")
-        hip_ranges_input = request.form['hip_ranges']  # Comma-separated list of ranges (e.g., "1-80,81-100")
+        # Get sale dates from user input
+        sale_dates_input = request.form['sale_dates']
+        hip_ranges_input = request.form['hip_ranges']
 
-        # Assuming 'df' is your DataFrame loaded from the Excel file or other sources
-
-        # Update sale dates and days
+        # Update sale dates and corresponding day column
         update_sale_dates(df, sale_dates_input, hip_ranges_input)
 
         # Adding a new column BOOK
