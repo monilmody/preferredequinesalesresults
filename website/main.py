@@ -2505,7 +2505,7 @@ def tattersalls():
         s3_client.download_file(S3_BUCKET, s3_file_path, temp_file_path)
 
         # Read the selected Excel file into a DataFrame
-        df = pd.read_csv(temp_file_path)
+        df = pd.read_excel(temp_file_path)
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -2825,7 +2825,7 @@ def tattersalls():
 
         # Save the formatted file back to the server
         formatted_file_path = f"/tmp/formatted_{file_path}"
-        df.to_csv(formatted_file_path, index=False)
+        df.to_excel(formatted_file_path, index=False)
 
         # Upload the formatted file back to S3
         formatted_s3_path = f"horse_data/formatted_{file_path}"
