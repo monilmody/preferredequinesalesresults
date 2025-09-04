@@ -98,8 +98,8 @@ class main_Tdamsire(Base):
 csv_data = pd.DataFrame({})
 
 S3_BUCKET = 'horse-list-photos-and-details'
-ROLE_ARN = 'arn:aws:iam::211125609145:role/python-website-logs'  # Replace with your IAM Role ARN
-SESSION_NAME = 'MySession'
+# ROLE_ARN = 'arn:aws:iam::211125609145:role/python-website-logs'  # Replace with your IAM Role ARN
+# SESSION_NAME = 'MySession'
 
 UPLOAD_FOLDER = '/tmp'  # Path to the upload directory
 # Set the UPLOAD_FOLDER in the app's configuration
@@ -108,33 +108,10 @@ ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}  # Allowed file types: CSV and Excel
 
 sts_client = boto3.client('sts')
 
-def assume_role():
-    """Assume an IAM role and return temporary credentials."""
-    try:
-        response = sts_client.assume_role(
-            RoleArn=ROLE_ARN,
-            RoleSessionName=SESSION_NAME
-        )
-
-        credentials = response['Credentials']
-        
-        # Return the temporary credentials
-        return credentials['AccessKeyId'], credentials['SecretAccessKey'], credentials['SessionToken']
-    except ClientError as e:
-        logging.error(f"Error assuming role: {str(e)}")
-        raise Exception("An error occurred while assuming the IAM role.")
- 
 def create_s3_client():
-    """Create an S3 client using assumed IAM role credentials."""
-    access_key, secret_key, session_token = assume_role()
-
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-        aws_session_token=session_token
-    )
-    
+    """Create an S3 client using instance profile credentials."""
+    # No need to pass access keys; Boto3 will use the instance profile automatically
+    s3_client = boto3.client('s3')
     return s3_client
 
 def allowed_file(filename):
@@ -175,10 +152,12 @@ def handle_file_upload(request):
             # Upload the file to the S3 bucket
             s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
             print(f"File successfully uploaded to S3: {s3_file_path}")
+
+            # Cleanup: Remove the temporary file after upload
+            os.remove(file_path)
                         
             # You can save this URL in your database, if required for reference.
             return filename
-
         else:
             raise ValueError("Invalid file type")
 
@@ -248,7 +227,7 @@ def upload_data_to_mysql(df):
         # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the columns you want to insert into each table
-        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam"]
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
         for _, row in df.iterrows():
