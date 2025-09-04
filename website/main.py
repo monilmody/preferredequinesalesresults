@@ -869,53 +869,73 @@ def fasigTipton():
         # Adding a new column SALECODE
         df['SALECODE'] = salecode
 
-        # Adding a new column SALEDATE
+       # Adding a new column SALEDATE from SESSION
         if 'SESSION' in df.columns:
-            # Convert 'SESSION' to datetime, allowing time or just the date
-            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%Y-%m-%d', errors='coerce')  # with time format
-
-            # Fill any invalid dates with a default date
+            # First, clean the string column
+            df['SESSION'] = df['SESSION'].astype(str).str.strip()
+            
+            # Replace common invalid values with NaN
+            invalid_values = ['', 'nan', 'None', 'NULL', 'NaT', 'null', 'undefined']
+            df['SESSION'] = df['SESSION'].replace(invalid_values, pd.NaT)
+            
+            # Convert to datetime - try multiple approaches
+            df['SALEDATE'] = pd.to_datetime(df['SESSION'], errors='coerce')
+            
+            # If there are still parsing issues, try common date formats
+            if df['SALEDATE'].isna().any():
+                print("Trying alternative date formats for remaining values...")
+                common_formats = [
+                    '%Y-%m-%d',      # 2025-08-11
+                    '%m/%d/%Y',      # 08/11/2025
+                    '%d/%m/%Y',      # 11/08/2025
+                    '%Y/%m/%d',      # 2025/08/11
+                    '%d-%m-%Y',      # 11-08-2025
+                    '%m-%d-%Y',      # 08-11-2025
+                    '%b %d, %Y',     # Aug 11, 2025
+                    '%d %b %Y',      # 11 Aug 2025
+                    '%B %d, %Y',     # August 11, 2025
+                ]
+                
+                for fmt in common_formats:
+                    mask = df['SALEDATE'].isna()
+                    if mask.any():
+                        temp_dates = pd.to_datetime(df.loc[mask, 'SESSION'], format=fmt, errors='coerce')
+                        df.loc[mask, 'SALEDATE'] = temp_dates
+            
+            # Fill any remaining NaT values with a default date
             df['SALEDATE'] = df['SALEDATE'].fillna(pd.to_datetime('1900-01-01'))
             
-            # Extract only the date part and format as string for MySQL
+            # Format as string for MySQL (YYYY-MM-DD)
             df['SALEDATE'] = df['SALEDATE'].dt.strftime('%Y-%m-%d')
+            
+            print(f"Successfully converted {len(df) - df['SESSION'].isna().sum()} dates")
+            print(f"Default dates used: {df['SESSION'].isna().sum()}")
 
         # Adding a new column BOOK
-        book = 1
-        df['BOOK'] = book
+        df['BOOK'] = 1
 
-        # Initialize a counter
-        counter = 0
+        # Create DAY column using pandas (efficient and reliable)
+        if 'SALEDATE' in df.columns:
+            # Get unique dates in chronological order
+            unique_dates = sorted(df['SALEDATE'].unique())
+            
+            # Create mapping from date to sequential day number
+            date_to_day = {date: day_num for day_num, date in enumerate(unique_dates, 1)}
+            
+            # Map the dates to day numbers
+            df['DAY'] = df['SALEDATE'].map(date_to_day)
+            
+            print(f"Created {len(unique_dates)} unique day numbers")
 
-        # Initialize a list to store the counter values
-        counter_values = []
-
-        # Iterate through the list of dates
-        prev_date = None  # Initialize the previous date variable
-        for i, date_str in enumerate(df['SALEDATE']):
-            try:
-                # Use the correct date format here (now the column should be in 'YYYY-MM-DD' format)
-                date1 = datetime.strptime(date_str, '%Y-%m-%d')
-                
-                # Convert the datetime object back to string for consistency
-                formatted_date_str = date1.strftime('%Y-%m-%d')
-                
-                # Check if this is the first date or if the date has changed from the previous one
-                if i == 0 or formatted_date_str != prev_date:
-                    counter += 1  # Increment the counter when the date changes
-                    prev_date = formatted_date_str  # Update the previous date
-                
-                counter_values.append(counter)
-            except ValueError:
-                print(f"Invalid date format or value at index {i}: {date_str}")
-                counter_values.append(counter)  # Use current counter value
-
-        # Adding a new column DAY
-        df['DAY'] = counter_values
-
-        # Dropping a column SESSION
+        # Dropping the SESSION column
         if 'SESSION' in df.columns:
             df.drop(columns=['SESSION'], inplace=True)
+            print("Dropped SESSION column")
+
+        # Final verification
+        print(f"Final DataFrame shape: {df.shape}")
+        print("Sample of converted dates:")
+        print(df[['SALEDATE', 'DAY']].head(10))
 
         # Adding a new column HIP
         if 'HIP1' in df.columns:
