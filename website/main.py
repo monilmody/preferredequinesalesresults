@@ -2904,21 +2904,22 @@ def arquana():
             # Convert the sale dates to datetime objects
             sale_date_objects = [datetime.strptime(date, '%Y-%m-%d').date() for date in sale_dates]
             
-            # Initialize a dictionary to store hip ranges and corresponding sale dates
+            # Initialize a dictionary to store hip ranges and corresponding sale dates and days
             hip_range_data = {}
             
             # Iterate over the ranges and sale dates
             for i, hip_range in enumerate(hip_ranges):
                 start, end = map(int, hip_range.split('-'))  # Convert the range to integers
                 
-                # For each hip number in the range, assign the sale date
+                # For each hip number in the range, assign the sale date and day
                 for hip_number in range(start, end + 1):
-                    hip_range_data[hip_number] = {'sale_date': sale_date_objects[i]}
-                    
-                # Update SALEDATE based on hip_range_data
+                    hip_range_data[hip_number] = {'sale_date': sale_date_objects[i], 'day': i + 1}
+            
+            # Update SALEDATE and DAY based on hip_range_data
             for hip_number, data in hip_range_data.items():
-                # Check if 'Lot' matches the hip_number and update SALEDATE
+                # Check if 'Lot' matches the hip_number and update SALEDATE and DAY
                 df.loc[df['Lot'] == hip_number, 'SALEDATE'] = data['sale_date']
+                df.loc[df['Lot'] == hip_number, 'DAY'] = data['day']
             
             # Optional: Print out invalid lot numbers if needed
             invalid_hips = df[df['SALEDATE'].isna()]
@@ -2932,15 +2933,12 @@ def arquana():
 
         # Assuming 'df' is your DataFrame loaded from the Excel file or other sources
 
-        # Update sale dates and corresponding day column
+        # Update sale dates and days
         update_sale_dates(df, sale_dates_input, hip_ranges_input)
 
         # Adding a new column BOOK
         book = 1
         df['BOOK'] = book
-
-        # Adding a new column DAY
-        df['DAY'] = 1
 
         # Dropping a column SESSION
         if 'Day' in df.columns:
