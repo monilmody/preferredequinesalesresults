@@ -2915,8 +2915,8 @@ def arquana():
             
             # Update SALEDATE and DAY columns
             for hip_number, data in hip_range_data.items():
-                df.loc[df['hip_number'] == hip_number, 'SALEDATE'] = data['sale_date']
-                df.loc[df['hip_number'] == hip_number, 'DAY'] = data['day']
+                df.loc[df['Lot'] == hip_number, 'SALEDATE'] = data['sale_date']
+                df.loc[df['Lot'] == hip_number, 'DAY'] = data['day']
 
         # Get sale dates from user input
         sale_dates_input = request.form['sale_dates']
