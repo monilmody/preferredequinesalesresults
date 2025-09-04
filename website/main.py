@@ -877,8 +877,6 @@ def fasigTipton():
             # If the time format does not match, try to convert it just to date
             df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y', errors='coerce').fillna(df['SALEDATE'])
 
-            df['SALEDATE'] = df['SALEDATE'].fillna('1900-01-01')
-
             # Extract only the date part (ignoring time) if time exists
             df['SALEDATE'] = pd.to_datetime(df['SALEDATE']).dt.date
 
