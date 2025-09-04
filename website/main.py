@@ -872,16 +872,13 @@ def fasigTipton():
         # Adding a new column SALEDATE
         if 'SESSION' in df.columns:
             # Convert 'SESSION' to datetime, allowing time or just the date
-            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y %H:%M', errors='coerce')  # with time format
+            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%Y-%m-%d', errors='coerce')  # with time format
 
-            # If the time format does not match, try to convert it just to date
-            df['SALEDATE'] = pd.to_datetime(df['SESSION'], format='%m/%d/%Y', errors='coerce').fillna(df['SALEDATE'])
-
-            # Extract only the date part (ignoring time) if time exists
-            df['SALEDATE'] = pd.to_datetime(df['SALEDATE']).dt.date
-
-            # Format 'SALEDATE' to 'YYYY-MM-DD' for MySQL compatibility
-            df['SALEDATE'] = df['SALEDATE'].apply(lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else '1900-01-01')
+            # Fill any invalid dates with a default date
+            df['SALEDATE'] = df['SALEDATE'].fillna(pd.to_datetime('1900-01-01'))
+            
+            # Extract only the date part and format as string for MySQL
+            df['SALEDATE'] = df['SALEDATE'].dt.strftime('%Y-%m-%d')
 
         # Adding a new column BOOK
         book = 1
@@ -911,7 +908,7 @@ def fasigTipton():
                 counter_values.append(counter)
             except ValueError:
                 print(f"Invalid date format or value at index {i}: {date_str}")
-
+                counter_values.append(counter)  # Use current counter value
 
         # Adding a new column DAY
         df['DAY'] = counter_values
