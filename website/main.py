@@ -13,9 +13,12 @@ import sys
 import re
 import os
 import boto3
+from io import BytesIO, StringIO
 from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
 import logging
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.exc import IntegrityError
 
 print(sys.executable)
 
@@ -27,7 +30,9 @@ Base = declarative_base()
 # Define the table schema for tsales
 class main_Tsales(Base):
     __tablename__ = 'tsales'
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = (  
+        UniqueConstraint('SALECODE', 'HIP', name='uix_salecode_hip'),
+        {'extend_existing': True})
     SALE_ID = Column(Integer, primary_key=True, autoincrement=True)
     SALEYEAR = Column(Integer)
     SALETYPE = Column(String(1))
@@ -106,8 +111,6 @@ UPLOAD_FOLDER = '/tmp'  # Path to the upload directory
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), UPLOAD_FOLDER)  # Or any path you prefer
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}  # Allowed file types: CSV and Excel
 
-sts_client = boto3.client('sts')
-
 def create_s3_client():
     """Create an S3 client using instance profile credentials."""
     # No need to pass access keys; Boto3 will use the instance profile automatically
@@ -149,9 +152,50 @@ def handle_file_upload(request):
             s3_client = create_s3_client()  # Create the S3 client with assumed role credentials
             s3_file_path = f"horse_data/{filename}"  # Path in S3
 
-            # Upload the file to the S3 bucket
-            s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
-            print(f"File successfully uploaded to S3: {s3_file_path}")
+            if check_existing_file_in_s3(s3_client, s3_file_path):
+                # If the file exists on S3, download it
+                existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
+
+                # Read both the existing file and the newly uploaded file into DataFrames
+                if file_path.endswith(".csv"):
+                    new_data_df = pd.read_csv(file_path)
+                elif file_path.endswith(".xlsx") or file_path.endswith(".xls"):
+                    new_data_df = pd.read_excel(file_path)
+
+                # Detect file type based on extension
+                if filename.endswith('.csv'):
+                    # Decode as text, then read with StringIO
+                    existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
+                elif filename.endswith(('.xlsx', '.xls')):
+                    # Use BytesIO for binary Excel files
+                    existing_data_df = pd.read_excel(BytesIO(existing_file_data))
+                else:
+                    raise ValueError("Unsupported file format.")
+
+                existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
+                new_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
+
+                # Merge - new data takes priority
+                merged_data_df = new_data_df.combine_first(existing_data_df)
+
+                # Reset index
+                merged_data_df = merged_data_df.reset_index()
+                
+                # Write the merged DataFrame to a new file (or overwrite the existing one)
+                merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{filename}")
+                merged_data_df.to_csv(merged_file_path, index=False)
+
+                # Upload the merged file back to S3
+                s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
+                print(f"File successfully uploaded to S3: {s3_file_path}")
+
+                # Cleanup: Remove the temporary files after upload
+                os.remove(file_path)
+                os.remove(merged_file_path)
+            else:
+                # If the file doesn't exist on S3, upload it as is
+                s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
+                print(f"New file uploaded to S3: {s3_file_path}")
 
             # Cleanup: Remove the temporary file after upload
             os.remove(file_path)
@@ -164,6 +208,29 @@ def handle_file_upload(request):
     except Exception as e:
         print(f"Error during file upload: {e}")
         raise e
+    
+# Check if the file exists on S3
+def check_existing_file_in_s3(s3_client, s3_file_path):
+    try:
+        s3_client.head_object(Bucket=S3_BUCKET, Key=s3_file_path)
+        return True
+    except s3_client.exceptions.ClientError as e:
+        error_code = int(e.response['Error']['Code'])
+        if error_code == 404:
+            return False
+        else:
+            raise e
+        
+# Download the existing file from S3
+def download_existing_file_from_s3(s3_client, s3_file_path):
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET, Key=s3_file_path)
+        existing_file_data = response['Body'].read().decode('utf-8')
+        return existing_file_data
+    except Exception as e:
+        print(f"Error downloading existing file from S3: {e}")
+        raise e
+
     
 def upload_data_to_mysql(df):
     global csv_data
@@ -197,27 +264,28 @@ def upload_data_to_mysql(df):
 
         if result_existing_file:
             # File exists, delete previous records and the file from the system
-            delete_previous_records_sql = text("DELETE FROM documents WHERE file_name = :file_name")
-            session.execute(delete_previous_records_sql, {'file_name': filename_without_extension})
+            update_previous_records_sql = text("UPDATE documents SET upload_date = NOW() WHERE file_name = :file_name")
+            session.execute(update_previous_records_sql, {'file_name': filename_without_extension})
+            session.commit()
+        else:
+            insert_file_sql = text("""
+                INSERT INTO documents (file_name, upload_date)
+                VALUES (:file_name, NOW())
+            """)
+            session.execute(insert_file_sql, {'file_name': filename_without_extension})
             session.commit()
 
-            # Delete the previous file from the file system
-            for ext in ['.csv', '.xls', '.xlsx']:
-                previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ext)
-                if os.path.exists(previous_file_path):
-                    os.remove(previous_file_path)
+            # # Delete the previous file from the file system
+            # for ext in ['.csv', '.xls', '.xlsx']:
+            #     previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ext)
+            #     if os.path.exists(previous_file_path):
+            #         os.remove(previous_file_path)
 
         # # Save the new file using the SALECODE as the filename (just a placeholder)
         # with open(file_path, 'w') as f:
         #     f.write("This is a placeholder file for SALECODE: " + sale_code)  # Example content
 
         # Insert file details into the database (with the current timestamp)
-        insert_file_sql = text("""
-            INSERT INTO documents (file_name, upload_date)
-            VALUES (:file_name, NOW())
-        """)
-        session.execute(insert_file_sql, {'file_name': filename_without_extension})
-        session.commit()
         print("3")
 
         # Define tables
@@ -236,13 +304,28 @@ def upload_data_to_mysql(df):
                         tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
                         tdamsire = main_Tdamsire(**tdamsire_data)
                         session.add(tdamsire)
+                        
+                        # Upsert tsales by SALECODE and HIP
+                        salecode = row["SALECODE"]
+                        hip = row["HIP"]
+                        tsales_data = {col: row[col] for col in columns_for_tsales if col in row and pd.notnull(row[col])}
 
-                        # Use the generated DAMSIRE_ID in tsales
-                        tsales_data = {col: row[col] for col in columns_for_tsales}
-                        #tsales_data['DAMSIRE_ID'] = tdamsire.DAMSIRE_ID
-                        tsales = main_Tsales(**tsales_data)
-                        tsales.tdamsire = tdamsire
-                        session.add(tsales)
+                        try:
+                            tsales = session.query(main_Tsales).filter_by(SALECODE=salecode, HIP=hip).first()
+
+                            if tsales:
+                                # If the tsales record exists, just update it
+                                for k, v in tsales_data.items():
+                                    setattr(tsales, k, v)
+                            else:
+                                # If the tsales record does not exist, insert it
+                                tsales = main_Tsales(**tsales_data)
+                                session.add(tsales)
+
+                        except IntegrityError as e:
+                            session.rollback()
+                            print(f"IntegrityError: {e.orig}")
+                            # Handle error (maybe log or return a specific message)
 
                     except (MySQLError, Exception) as e:
                         session.rollback()
