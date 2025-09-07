@@ -576,7 +576,7 @@ def keenland():
         def update_sale_dates(df, sale_dates_input):
             sale_dates = [date.strip() for date in sale_dates_input.split(',')]
             # Convert the sale dates to datetime objects
-            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d') for date in sale_dates]
+            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d').date() for date in sale_dates]
             for i, sale_date_obj in enumerate(sale_date_objects):
                 day_increment = i + 1  # Increment the day by the index (starting from 1)
                 for j, day in enumerate(df['DAY']):
@@ -620,8 +620,8 @@ def keenland():
         tattoo = ''
         df['TATTOO'] = tattoo
 
-        default_date = pd.to_datetime('1900-01-01')  # Choose your default date
-        df['DATEFOAL'] = pd.to_datetime(df['DOB'], errors='coerce').fillna(default_date)
+        default_date = pd.to_datetime('1900-01-01').date()  # Choose your default date
+        df['DATEFOAL'] = pd.to_datetime(df['DOB'], errors='coerce').dt.date.fillna(default_date)
 
         # Function to calculate the age from DATEFOAL
         def calculate_age(datefoal):
@@ -771,6 +771,8 @@ def keenland():
         # Adding a new column LASTBRED
         if 'LastService' in df.columns:
             df['LASTBRED'] = pd.to_datetime(df['LastService']).fillna(pd.to_datetime("1901-01-01"))
+        else:
+            df['LASTBRED'] = pd.to_datetime("1901-01-01").date()
             
         # Adding a new column CONLNAME
         if 'Consignor' in df.columns:
