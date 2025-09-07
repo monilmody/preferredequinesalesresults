@@ -79,7 +79,7 @@ class main_Tsales(Base):
     tSireofdam = Column(String(255))
     FARMNAME = Column(String(255))
     FARMCODE = Column(String(255))
-    DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'), nullable=True)
+    DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
     tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
 # Define the table schema for tdamsire
