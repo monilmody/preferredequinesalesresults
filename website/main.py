@@ -628,6 +628,10 @@ def keenland():
                     raise ValueError(f"Invalid date format in input: {e}")
                 
                 for i, sale_date_obj in enumerate(sale_date_objects):
+                    
+                    # Convert sale_date_obj to a pandas datetime object
+                    sale_date_obj = pd.to_datetime(sale_date_obj)  # Convert to datetime64[ns]
+
                     day_increment = i + 1  + day_offset # Increment the day by the index (starting from 1)
                     for j, day in enumerate(df['DAY']):
                         if not pd.isnull(day):
