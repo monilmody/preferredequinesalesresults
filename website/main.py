@@ -125,76 +125,86 @@ def handle_file_upload(request):
     try:
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
-        
+
         print(request.files)
 
         file = request.files['file']
-        
         print("Filename:", file.filename)
 
         if file.filename == '':
             raise ValueError("No selected file")
 
-        # Ensure the file has an allowed extension (CSV or Excel)
         if file and allowed_file(file.filename):
-            # Use SALECODE as the filename (add .csv or .xlsx extension based on file type)
-            # filename = file.filename  # Use the original filename for now
-            # file_path = os.path.join(UPLOAD_FOLDER, filename)
-
-            # Sanitize and generate a safe filename
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-            # Now upload the file to S3 using the assumed role credentials
-            s3_client = create_s3_client()  # Create the S3 client with assumed role credentials
-            s3_file_path = f"horse_data/formatted_{filename}"  # Path in S3
+            # Save the file temporarily
+            file.save(file_path)
+
+            # S3 upload path
+            s3_client = create_s3_client()
+            s3_file_path = f"horse_data/formatted_{filename}"
 
             if check_existing_file_in_s3(s3_client, s3_file_path):
-                # If the file exists on S3, download it
+                # If the file exists on S3, download it and proceed with merging
                 existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
 
-                # Read both the existing file and the newly uploaded file into DataFrames
+                # Read the uploaded file and the existing file into DataFrames
                 if file_path.endswith(".csv"):
                     new_data_df = pd.read_csv(file_path)
                 elif file_path.endswith(".xlsx") or file_path.endswith(".xls"):
                     new_data_df = pd.read_excel(file_path)
 
-                # Detect file type based on extension
+                # Decode existing file from S3 and read into DataFrame
                 if filename.endswith('.csv'):
-                    # Decode as text, then read with StringIO
                     existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
                 elif filename.endswith(('.xlsx', '.xls')):
-                    # Use BytesIO for binary Excel files
                     existing_data_df = pd.read_excel(BytesIO(existing_file_data))
                 else:
                     raise ValueError("Unsupported file format.")
 
+                # Clean column names by stripping spaces
+                new_data_df.columns = new_data_df.columns.str.strip()
+                existing_data_df.columns = existing_data_df.columns.str.strip()
+
+                # Debug: Print columns and first few rows of existing data
+                print("Columns in existing data:", existing_data_df.columns)
+                print("First few rows of the existing file:")
+                print(existing_data_df.head())
+
+                # Check if required columns exist
+                required_columns = ['SALECODE', 'HIP']
+                if not all(col in new_data_df.columns for col in required_columns):
+                    raise ValueError(f"Required columns {required_columns} are missing in the uploaded file.")
+
+                if not all(col in existing_data_df.columns for col in required_columns):
+                    raise ValueError(f"Required columns {required_columns} are missing in the formatted file.")
+
+                # Set index and merge dataframes
                 existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
                 new_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
 
-                # Merge - new data takes priority
                 merged_data_df = new_data_df.combine_first(existing_data_df)
-
-                # Reset index
                 merged_data_df = merged_data_df.reset_index()
-                
-                # Write the merged DataFrame to a new file (or overwrite the existing one)
+
+                # Write merged data to a new file
                 merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{filename}")
                 merged_data_df.to_csv(merged_file_path, index=False)
 
-                # Upload the merged file back to S3
+                # Upload merged file to S3
                 s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
                 print(f"File successfully uploaded to S3: {s3_file_path}")
 
-                # Cleanup: Remove the temporary files after upload
+                # Clean up temporary files
                 os.remove(file_path)
                 os.remove(merged_file_path)
             else:
                 # If the file doesn't exist on S3, upload it as is
+                print(f"File doesn't exist on S3. Uploading the new file as is: {s3_file_path}")
                 s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
                 print(f"New file uploaded to S3: {s3_file_path}")
 
-            # Cleanup: Remove the temporary file after upload
+            # Clean up the uploaded file after processing
             os.remove(file_path)
                         
             # You can save this URL in your database, if required for reference.
@@ -205,7 +215,7 @@ def handle_file_upload(request):
     except Exception as e:
         print(f"Error during file upload: {e}")
         raise e
-    
+
 # Check if the file exists on S3
 def check_existing_file_in_s3(s3_client, formatted_s3_file_path):
     try:
