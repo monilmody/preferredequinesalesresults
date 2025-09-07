@@ -425,12 +425,16 @@ def upload_data_to_mysql_keenland(df):
                         tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
                         tdamsire = main_Tdamsire(**tdamsire_data)
                         session.add(tdamsire)
+                        session.flush()
                         
                         # Upsert tsales by SALECODE and HIP
                         salecode = row["SALECODE"]
                         hip = row["HIP"]
                         tsales_data = {col: row[col] for col in columns_for_tsales if col in row and pd.notnull(row[col])}
 
+                        # Add the relationship by setting DAMSIRE_ID
+                        tsales_data['DAMSIRE_ID'] = tdamsire.DAMSIRE_ID  # Use the auto-generated ID
+                        
                         try:
                             tsales = session.query(main_Tsales).filter_by(SALECODE=salecode, HIP=hip).first()
 
