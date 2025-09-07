@@ -30,9 +30,7 @@ Base = declarative_base()
 # Define the table schema for tsales
 class main_Tsales(Base):
     __tablename__ = 'tsales'
-    __table_args__ = (  
-        UniqueConstraint('SALECODE', 'HIP', name='uix_salecode_hip'),
-        {'extend_existing': True})
+    __table_args__ = {'extend_existing': True}
     SALEID = Column(Integer, primary_key=True, autoincrement=True)
     SALEYEAR = Column(Integer)
     SALETYPE = Column(String(1))
