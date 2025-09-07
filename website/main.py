@@ -33,7 +33,7 @@ class main_Tsales(Base):
     __table_args__ = (  
         UniqueConstraint('SALECODE', 'HIP', name='uix_salecode_hip'),
         {'extend_existing': True})
-    SALE_ID = Column(Integer, primary_key=True, autoincrement=True)
+    SALEID = Column(Integer, primary_key=True, autoincrement=True)
     SALEYEAR = Column(Integer)
     SALETYPE = Column(String(1))
     SALECODE = Column(String(20))
