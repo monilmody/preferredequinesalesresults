@@ -639,7 +639,7 @@ def keenland():
                 
                 # Convert the sale dates to datetime objects
                 try:
-                    sale_date_objects = [datetime.strptime(date, '%Y-%m-%d').date() for date in sale_dates]
+                    sale_date_objects = [pd.to_datetime(date, format='%Y-%m-%d') for date in sale_dates]
                 except ValueError as e:
                     raise ValueError(f"Invalid date format in input: {e}")
                 
