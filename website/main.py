@@ -423,6 +423,9 @@ def upload_data_to_mysql_keenland(df):
                         tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
                         tdamsire = main_Tdamsire(**tdamsire_data)
                         session.add(tdamsire)
+                        session.flush()
+                        
+                        print(f"Generated DAMSIRE_ID: {tdamsire.DAMSIRE_ID}")  # Debug
                         
                         # Upsert tsales by SALECODE and HIP
                         salecode = row["SALECODE"]
