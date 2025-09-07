@@ -13,9 +13,12 @@ import sys
 import re
 import os
 import boto3
+from io import BytesIO, StringIO
 from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
 import logging
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.exc import IntegrityError
 
 print(sys.executable)
 
@@ -27,8 +30,10 @@ Base = declarative_base()
 # Define the table schema for tsales
 class main_Tsales(Base):
     __tablename__ = 'tsales'
-    __table_args__ = {'extend_existing': True}
-    SALE_ID = Column(Integer, primary_key=True, autoincrement=True)
+    __table_args__ = (  
+        UniqueConstraint('SALECODE', 'HIP', name='uix_salecode_hip'),
+        {'extend_existing': True})
+    SALEID = Column(Integer, primary_key=True, autoincrement=True)
     SALEYEAR = Column(Integer)
     SALETYPE = Column(String(1))
     SALECODE = Column(String(20))
@@ -106,8 +111,6 @@ UPLOAD_FOLDER = '/tmp'  # Path to the upload directory
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), UPLOAD_FOLDER)  # Or any path you prefer
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}  # Allowed file types: CSV and Excel
 
-sts_client = boto3.client('sts')
-
 def create_s3_client():
     """Create an S3 client using instance profile credentials."""
     # No need to pass access keys; Boto3 will use the instance profile automatically
@@ -117,6 +120,73 @@ def create_s3_client():
 def allowed_file(filename):
     """Check if the uploaded file is either a CSV or Excel file."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def handle_file_upload_keenland(request, formatted_df, salecode):
+    try:
+        # S3 upload path
+        s3_client = create_s3_client()
+        s3_file_path = f"horse_data/formatted_{salecode}.csv"
+
+        if check_existing_file_in_s3(s3_client, s3_file_path):
+            # If the file exists on S3, download it and proceed with merging
+            existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
+
+            # Read the existing file from S3 into DataFrame
+            existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
+            
+            # Clean column names by stripping spaces
+            formatted_df.columns = formatted_df.columns.str.strip()
+            existing_data_df.columns = existing_data_df.columns.str.strip()
+
+            # Debug: Print columns and first few rows of existing data
+            print("Columns in existing data:", existing_data_df.columns)
+            print("First few rows of the existing file:")
+            print(existing_data_df.head())
+
+            # Check if required columns exist
+            required_columns = ['SALECODE', 'HIP']
+            if not all(col in formatted_df.columns for col in required_columns):
+                raise ValueError(f"Required columns {required_columns} are missing in the uploaded file.")
+
+            if not all(col in existing_data_df.columns for col in required_columns):
+                raise ValueError(f"Required columns {required_columns} are missing in the formatted file.")
+
+            # Set index and merge dataframes
+            existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
+            formatted_df.set_index(['SALECODE', 'HIP'], inplace=True)
+
+            merged_data_df = formatted_df.combine_first(existing_data_df)
+            merged_data_df = merged_data_df.reset_index()
+
+            # Write merged data to a new file
+            merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{salecode}")
+            merged_data_df.to_csv(merged_file_path, index=False)
+
+            # Upload merged file to S3
+            s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
+            print(f"File successfully uploaded to S3: {s3_file_path}")
+
+            # Clean up temporary files
+            os.remove(merged_file_path)
+            return merged_data_df
+        else:
+            # If the file doesn't exist on S3, upload it as is
+            print(f"File doesn't exist on S3. Uploading the new file as is: {s3_file_path}")
+             # Save formatted data temporarily
+            formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{salecode}.csv")
+            formatted_df.to_csv(formatted_file_path, index=False)
+            
+            s3_client.upload_file(formatted_file_path, S3_BUCKET, s3_file_path)
+            print(f"New formatted file uploaded to S3: {s3_file_path}")
+
+            # Clean up temporary file
+            os.remove(formatted_file_path)
+            
+            return formatted_df
+    
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+        raise e
 
 def handle_file_upload(request):
     try:
@@ -164,7 +234,29 @@ def handle_file_upload(request):
     except Exception as e:
         print(f"Error during file upload: {e}")
         raise e
-    
+  
+# Check if the file exists on S3
+def check_existing_file_in_s3(s3_client, formatted_s3_file_path):
+    try:
+        s3_client.head_object(Bucket=S3_BUCKET, Key=formatted_s3_file_path)
+        return True
+    except s3_client.exceptions.ClientError as e:
+        error_code = int(e.response['Error']['Code'])
+        if error_code == 404:
+            return False
+        else:
+            raise e
+        
+# Download the existing file from S3
+def download_existing_file_from_s3(s3_client, formatted_s3_file_path):
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET, Key=formatted_s3_file_path)
+        formatted_file_data = response['Body'].read()
+        return formatted_file_data
+    except Exception as e:
+        print(f"Error downloading existing file from S3: {e}")
+        raise e
+
 def upload_data_to_mysql(df):
     global csv_data
     db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
@@ -260,6 +352,118 @@ def upload_data_to_mysql(df):
         session.close()
     return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
 
+    
+def upload_data_to_mysql_keenland(df):
+    global csv_data
+    db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
+    db_name = "horse"
+    db_user = "preferredequine"
+    db_pass = "914MoniMaker77$$"
+
+    try:
+        print("1")
+        # Create a MySQL engine
+        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4", connect_args={"collation": "utf8mb4_general_ci"})
+
+        # Create a session factory
+        Session = sessionmaker(bind=engine)
+
+        # Create a new session
+        session = Session()
+
+        file = request.files['file']
+
+        # Extract the filename from the FileStorage object
+        filename = file.filename
+
+        # Get the base filename without extension (remove ".csv")
+        filename_without_extension = os.path.splitext(filename)[0]
+        print("2")
+        # Check if the file (based on SALECODE) already exists in the database
+        check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
+        result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename_without_extension}).fetchone()
+
+        if result_existing_file:
+            # File exists, delete previous records and the file from the system
+            update_previous_records_sql = text("UPDATE documents SET upload_date = NOW() WHERE file_name = :file_name")
+            session.execute(update_previous_records_sql, {'file_name': filename_without_extension})
+            session.commit()
+        else:
+            insert_file_sql = text("""
+                INSERT INTO documents (file_name, upload_date)
+                VALUES (:file_name, NOW())
+            """)
+            session.execute(insert_file_sql, {'file_name': filename_without_extension})
+            session.commit()
+
+            # # Delete the previous file from the file system
+            # for ext in ['.csv', '.xls', '.xlsx']:
+            #     previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ext)
+            #     if os.path.exists(previous_file_path):
+            #         os.remove(previous_file_path)
+
+        # # Save the new file using the SALECODE as the filename (just a placeholder)
+        # with open(file_path, 'w') as f:
+        #     f.write("This is a placeholder file for SALECODE: " + sale_code)  # Example content
+
+        # Insert file details into the database (with the current timestamp)
+        print("3")
+
+        # Define tables
+        Base.metadata.create_all(engine)
+
+        # Define the relationship after both classes have been defined
+        # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
+
+        # Define the columns you want to insert into each table
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
+        columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
+
+        for _, row in df.iterrows():
+                    try:
+                        # Insert into tdamsire first
+                        tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
+                        tdamsire = main_Tdamsire(**tdamsire_data)
+                        session.add(tdamsire)
+                        
+                        # Upsert tsales by SALECODE and HIP
+                        salecode = row["SALECODE"]
+                        hip = row["HIP"]
+                        tsales_data = {col: row[col] for col in columns_for_tsales if col in row and pd.notnull(row[col])}
+
+                        try:
+                            tsales = session.query(main_Tsales).filter_by(SALECODE=salecode, HIP=hip).first()
+
+                            if tsales:
+                                # If the tsales record exists, just update it
+                                for k, v in tsales_data.items():
+                                    setattr(tsales, k, v)
+                            else:
+                                # If the tsales record does not exist, insert it
+                                tsales = main_Tsales(**tsales_data)
+                                session.add(tsales)
+
+                        except IntegrityError as e:
+                            session.rollback()
+                            print(f"IntegrityError: {e.orig}")
+                            # Handle error (maybe log or return a specific message)
+
+                    except (MySQLError, Exception) as e:
+                        session.rollback()
+                        print(f"Error: {str(e)}")
+                        time.sleep(2)  # Wait for a few seconds before retrying
+                        continue
+
+        session.commit()  # Commit all changes
+        print("Data inserted successfully into both tsales and tdamsire tables.")
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        session.rollback()
+    finally:
+        session.close()
+    return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
+
 @app.route("/")
 def home():
     return render_template("homepage.html")
@@ -306,18 +510,19 @@ def keenland():
         if file.filename == '':
             return render_template('keenland.html', message='No selected file')
 
-        file_name = handle_file_upload(request)  # This handles the file upload and returns the file path
-
-        s3_file_path = f"horse_data/{file_name}"
-
-        # Now download the file from S3 to process it
-        s3_client = create_s3_client()
-        temp_file_path = f"/tmp/{file_name}"
-
-        s3_client.download_file(S3_BUCKET, s3_file_path, temp_file_path)
+        # Save the uploaded file temporarily
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
         
-        # Now read the file (we assume CSV here)
-        df = pd.read_csv(temp_file_path)
+        # Read the uploaded file
+        if file_path.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        elif file_path.endswith(".xlsx") or file_path.endswith(".xls"):
+            df = pd.read_excel(file_path)
+        else:
+            os.remove(file_path)
+            return render_template('keenland.html', message='Unsupported file format')
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -498,11 +703,17 @@ def keenland():
         et = ''
         df['ET'] = et
 
-        # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
-        df['ELIG'] = df['Elig'].fillna("")
-
-        df.drop(columns=['Elig'], inplace=True)
-
+        # Handle the 'Elig' column first, if it exists
+        if 'Elig' in df.columns:
+            df['ELIG'] = df['Elig'].fillna("")  # Replace missing 'Elig' values with empty string
+            df.drop(columns=['Elig'], inplace=True)  # Drop the 'Elig' column after processing
+        # Handle the 'Area_Foaled' column if it exists
+        elif 'Area_Foaled' in df.columns:
+            df['ELIG'] = df['Area_Foaled'].fillna("")  # Replace missing 'Area_Foaled' values with empty string
+            df.drop(columns=['Area_Foaled'], inplace=True)  # Drop the 'Area_Foaled' column after processing
+        else:
+            df['ELIG'] = ""  # If neither 'Elig' nor 'Area_Foaled' exist, set 'ELIG' to an empty string
+        
         # Adding a new column SIRE
         df['SIRE'] =  df['Sire']
 
@@ -546,11 +757,17 @@ def keenland():
         # Adding a new column DDAMTATT
         ddamtatt = ''
         df['DDAMTATT'] = ddamtatt
+        
+        # Handle the 'CoveringSire' or 'Covering Sire' column and fill the 'BREDTO' column
+        if 'CoveringSire' in df.columns:
+            df['BREDTO'] = df['CoveringSire'].fillna("")  # Replace missing values in 'CoveringSire' with an empty string
+            df.drop(columns=['CoveringSire'], inplace=True)  # Drop the 'CoveringSire' column after processing
+        elif 'Covering Sire' in df.columns:
+            df['BREDTO'] = df['Covering Sire'].fillna("")  # Replace missing values in 'Covering Sire' with an empty string
+            df.drop(columns=['Covering Sire'], inplace=True)  # Drop the 'Covering Sire' column after processing
+        else:
+            df['BREDTO'] = ""  # If neither column exists, set 'BREDTO' to an empty string
 
-        # Adding a new column BREDTO
-        bredto = df['CoveringSire']
-        df['BREDTO'] = bredto.fillna("")
-            
         # Adding a new column LASTBRED
         if 'LastService' in df.columns:
             df['LASTBRED'] = pd.to_datetime(df['LastService']).fillna(pd.to_datetime("1901-01-01"))
@@ -614,31 +831,43 @@ def keenland():
             '---': np.nan
         }
         
-        df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')
+        # Step 1: Check if 'Price' exists, otherwise handle missing prices
+        if 'Price' in df.columns:
+            # Convert 'Price' to numeric and handle missing values
+            df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce').fillna(0)  # Fill NaNs with 0
 
-        # Process each row
-        for i, row in df.iterrows():
-            if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
-                # Extract the price from R.N.A. entry
-                match = re.search(r'\(([\d,]+)\)', row['Purchaser'])
-                if match:
-                    try:
-                        rna_price = float(match.group(1).replace(',', ''))
-                        # Set the PRICE for the current row to the extracted rna_price
-                        df.at[i, 'PRICE'] = rna_price
-                    except ValueError:
-                        print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
-                        rna_price = None
-                else:
-                    print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
+            rna_price = 0  # Initialize rna_price with 0 (default value)
 
-            elif pd.isna(row['PRICE']):
-                # Populate 'PRICE' for missing entries based on the last valid R.N.A. price
-                if rna_price is not None:
+            # Process each row to handle missing prices and 'R.N.A.'
+            for i, row in df.iterrows():
+                if row['PRICE'] == 0 and 'R.N.A.' in row['Purchaser']:
+                    # Extract the price from R.N.A. entry
+                    match = re.search(r'\(([\d,]+)\)', row['Purchaser'])
+                    if match:
+                        try:
+                            rna_price = float(match.group(1).replace(',', ''))
+                            # Set the PRICE for the current row to the extracted rna_price
+                            df.at[i, 'PRICE'] = rna_price
+                        except ValueError:
+                            print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
+                            # If conversion fails, keep rna_price as 0
+                            rna_price = 0
+                    else:
+                        print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
+
+                elif row['PRICE'] == 0:
+                    # If PRICE is still 0, fill with the last valid rna_price
                     df.at[i, 'PRICE'] = rna_price
+        else:
+            # If 'Price' does not exist, create an empty 'PRICE' column and fill with 0
+            df['PRICE'] = 0
 
+        # Drop the original 'Price' column if it exists
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
+
+        # Ensure that the 'PRICE' column is numeric (for further processing if needed)
+        df['PRICE'] = pd.to_numeric(df['PRICE'], errors='coerce').fillna(0)
 
         # Adding a new column CURRENCY
         currency = ''
@@ -674,13 +903,17 @@ def keenland():
 
         df['UTT'] = df['utt'].fillna(0.0)
 
-        pragnancy_mapping = {
+        pregnancy_mapping = {
             'PRAGNANCY' : 'P',
             'NOT PRAGNANT' : 'B',
             'NOT MATED' : 'NM'
         }
 
-        df['STATUS'] = df['Pregnancy'].replace(pragnancy_mapping).fillna("")
+        if 'Pregnancy' in df.columns:
+            df['STATUS'] = df['Pregnancy'].replace(pregnancy_mapping).fillna("")
+        else:
+            # If 'Pregnancy' column doesn't exist, initialize 'STATUS' as an empty column
+            df['STATUS'] = ""
 
         # Adding a new column DAM
         df['TDAM'] = df['Dam']
@@ -688,8 +921,11 @@ def keenland():
         # Adding a new column SIRE
         df['tSire'] = df['Sire']
 
-        # Adding a new column SIREOFDAM
-        df['tSireofdam'] = df['Sire Of Dam'].fillna("")
+        # Adding a new column tSireofdam
+        if 'Broodmare Sire' in df.columns:
+            df['tSireofdam'] = df['Broodmare Sire'].fillna("")
+        elif 'Sire Of Dam' in df.columns:
+            df['tSireofdam'] = df['Sire Of Dam'].fillna("")
 
         # Adding a new column FARMNAME
         farmname = ''
@@ -777,18 +1013,15 @@ def keenland():
         print("reached here 1")
 
   # Save the formatted file back to the temporary location
-        formatted_file_path = f"/tmp/formatted_{file_name}"
-        df.to_csv(formatted_file_path, index=False)
+        formatted_df = handle_file_upload_keenland(request, df, salecode)
 
-        # Upload the formatted file back to S3
-        formatted_s3_path = f"horse_data/formatted_{file_name}"
-        s3_client.upload_file(formatted_file_path, S3_BUCKET, formatted_s3_path)
 
-        # Clean up the temporary files after upload
-        os.remove(temp_file_path)
-        os.remove(formatted_file_path)
-
-        upload_data_to_mysql(df)
+        # Upload to MySQL
+        upload_data_to_mysql_keenland(formatted_df)
+        
+        
+        # Clean up the original uploaded file
+        os.remove(file_path)
 
         # Engine.execute("COMMIT;") 
 
