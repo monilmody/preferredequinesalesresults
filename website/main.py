@@ -135,8 +135,8 @@ def handle_file_upload_keenland(request, formatted_df, salecode):
             existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
             
             # Clean column names by stripping spaces
-            formatted_df.columns = formatted_df.columns.str
-            existing_data_df.columns = existing_data_df.columns.str
+            formatted_df.columns = formatted_df.columns.str.strip()
+            existing_data_df.columns = existing_data_df.columns.str.strip()
 
             # Debug: Print columns and first few rows of existing data
             print("Columns in existing data:", existing_data_df.columns)
