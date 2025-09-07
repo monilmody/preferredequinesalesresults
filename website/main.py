@@ -222,7 +222,7 @@ def check_existing_file_in_s3(s3_client, formatted_s3_file_path):
 def download_existing_file_from_s3(s3_client, formatted_s3_file_path):
     try:
         response = s3_client.get_object(Bucket=S3_BUCKET, Key=formatted_s3_file_path)
-        formatted_file_data = response['Body'].read().decode('utf-8')
+        formatted_file_data = response['Body'].read()
         return formatted_file_data
     except Exception as e:
         print(f"Error downloading existing file from S3: {e}")
