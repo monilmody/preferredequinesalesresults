@@ -581,11 +581,17 @@ def keenland():
         et = ''
         df['ET'] = et
 
-        # Replace state names in a new column 'ELIG' with state codes in the 'FOALED' column
-        df['ELIG'] = df['Elig'].fillna("")
-
-        df.drop(columns=['Elig'], inplace=True)
-
+        # Handle the 'Elig' column first, if it exists
+        if 'Elig' in df.columns:
+            df['ELIG'] = df['Elig'].fillna("")  # Replace missing 'Elig' values with empty string
+            df.drop(columns=['Elig'], inplace=True)  # Drop the 'Elig' column after processing
+        # Handle the 'Area_Foaled' column if it exists
+        elif 'Area_Foaled' in df.columns:
+            df['ELIG'] = df['Area_Foaled'].fillna("")  # Replace missing 'Area_Foaled' values with empty string
+            df.drop(columns=['Area_Foaled'], inplace=True)  # Drop the 'Area_Foaled' column after processing
+        else:
+            df['ELIG'] = ""  # If neither 'Elig' nor 'Area_Foaled' exist, set 'ELIG' to an empty string
+        
         # Adding a new column SIRE
         df['SIRE'] =  df['Sire']
 
@@ -629,11 +635,17 @@ def keenland():
         # Adding a new column DDAMTATT
         ddamtatt = ''
         df['DDAMTATT'] = ddamtatt
+        
+        # Handle the 'CoveringSire' or 'Covering Sire' column and fill the 'BREDTO' column
+        if 'CoveringSire' in df.columns:
+            df['BREDTO'] = df['CoveringSire'].fillna("")  # Replace missing values in 'CoveringSire' with an empty string
+            df.drop(columns=['CoveringSire'], inplace=True)  # Drop the 'CoveringSire' column after processing
+        elif 'Covering Sire' in df.columns:
+            df['BREDTO'] = df['Covering Sire'].fillna("")  # Replace missing values in 'Covering Sire' with an empty string
+            df.drop(columns=['Covering Sire'], inplace=True)  # Drop the 'Covering Sire' column after processing
+        else:
+            df['BREDTO'] = ""  # If neither column exists, set 'BREDTO' to an empty string
 
-        # Adding a new column BREDTO
-        bredto = df['CoveringSire']
-        df['BREDTO'] = bredto.fillna("")
-            
         # Adding a new column LASTBRED
         if 'LastService' in df.columns:
             df['LASTBRED'] = pd.to_datetime(df['LastService']).fillna(pd.to_datetime("1901-01-01"))
@@ -697,31 +709,43 @@ def keenland():
             '---': np.nan
         }
         
-        df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce')
+        # Step 1: Check if 'Price' exists, otherwise handle missing prices
+        if 'Price' in df.columns:
+            # Convert 'Price' to numeric and handle missing values
+            df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce').fillna(0)  # Fill NaNs with 0
 
-        # Process each row
-        for i, row in df.iterrows():
-            if pd.isna(row['PRICE']) and 'R.N.A.' in row['Purchaser']:
-                # Extract the price from R.N.A. entry
-                match = re.search(r'\(([\d,]+)\)', row['Purchaser'])
-                if match:
-                    try:
-                        rna_price = float(match.group(1).replace(',', ''))
-                        # Set the PRICE for the current row to the extracted rna_price
-                        df.at[i, 'PRICE'] = rna_price
-                    except ValueError:
-                        print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
-                        rna_price = None
-                else:
-                    print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
+            rna_price = 0  # Initialize rna_price with 0 (default value)
 
-            elif pd.isna(row['PRICE']):
-                # Populate 'PRICE' for missing entries based on the last valid R.N.A. price
-                if rna_price is not None:
+            # Process each row to handle missing prices and 'R.N.A.'
+            for i, row in df.iterrows():
+                if row['PRICE'] == 0 and 'R.N.A.' in row['Purchaser']:
+                    # Extract the price from R.N.A. entry
+                    match = re.search(r'\(([\d,]+)\)', row['Purchaser'])
+                    if match:
+                        try:
+                            rna_price = float(match.group(1).replace(',', ''))
+                            # Set the PRICE for the current row to the extracted rna_price
+                            df.at[i, 'PRICE'] = rna_price
+                        except ValueError:
+                            print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
+                            # If conversion fails, keep rna_price as 0
+                            rna_price = 0
+                    else:
+                        print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
+
+                elif row['PRICE'] == 0:
+                    # If PRICE is still 0, fill with the last valid rna_price
                     df.at[i, 'PRICE'] = rna_price
+        else:
+            # If 'Price' does not exist, create an empty 'PRICE' column and fill with 0
+            df['PRICE'] = 0
 
+        # Drop the original 'Price' column if it exists
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
+
+        # Ensure that the 'PRICE' column is numeric (for further processing if needed)
+        df['PRICE'] = pd.to_numeric(df['PRICE'], errors='coerce').fillna(0)
 
         # Adding a new column CURRENCY
         currency = ''
@@ -757,13 +781,17 @@ def keenland():
 
         df['UTT'] = df['utt'].fillna(0.0)
 
-        pragnancy_mapping = {
+        pregnancy_mapping = {
             'PRAGNANCY' : 'P',
             'NOT PRAGNANT' : 'B',
             'NOT MATED' : 'NM'
         }
 
-        df['STATUS'] = df['Pregnancy'].replace(pragnancy_mapping).fillna("")
+        if 'Pregnancy' in df.columns:
+            df['STATUS'] = df['Pregnancy'].replace(pregnancy_mapping).fillna("")
+        else:
+            # If 'Pregnancy' column doesn't exist, initialize 'STATUS' as an empty column
+            df['STATUS'] = ""
 
         # Adding a new column DAM
         df['TDAM'] = df['Dam']
@@ -772,7 +800,8 @@ def keenland():
         df['tSire'] = df['Sire']
 
         # Adding a new column SIREOFDAM
-        df['tSireofdam'] = df['Sire Of Dam'].fillna("")
+        if 'Sire Of Dam' in df.columns:
+            df['tSireofdam'] = df['Sire Of Dam'].fillna("")
 
         # Adding a new column FARMNAME
         farmname = ''
