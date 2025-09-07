@@ -121,90 +121,109 @@ def allowed_file(filename):
     """Check if the uploaded file is either a CSV or Excel file."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def handle_file_upload_keenland(request, formatted_df, salecode):
+    try:
+        # S3 upload path
+        s3_client = create_s3_client()
+        s3_file_path = f"horse_data/formatted_{salecode}.csv"
+
+        if check_existing_file_in_s3(s3_client, s3_file_path):
+            # If the file exists on S3, download it and proceed with merging
+            existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
+
+            # Read the existing file from S3 into DataFrame
+            existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
+            
+            # Clean column names by stripping spaces
+            formatted_df.columns = formatted_df.columns.str
+            existing_data_df.columns = existing_data_df.columns.str
+
+            # Debug: Print columns and first few rows of existing data
+            print("Columns in existing data:", existing_data_df.columns)
+            print("First few rows of the existing file:")
+            print(existing_data_df.head())
+
+            # Check if required columns exist
+            required_columns = ['SALECODE', 'HIP']
+            if not all(col in formatted_df.columns for col in required_columns):
+                raise ValueError(f"Required columns {required_columns} are missing in the uploaded file.")
+
+            if not all(col in existing_data_df.columns for col in required_columns):
+                raise ValueError(f"Required columns {required_columns} are missing in the formatted file.")
+
+            # Set index and merge dataframes
+            existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
+            formatted_df.set_index(['SALECODE', 'HIP'], inplace=True)
+
+            merged_data_df = formatted_df.combine_first(existing_data_df)
+            merged_data_df = merged_data_df.reset_index()
+
+            # Write merged data to a new file
+            merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{salecode}")
+            merged_data_df.to_csv(merged_file_path, index=False)
+
+            # Upload merged file to S3
+            s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
+            print(f"File successfully uploaded to S3: {s3_file_path}")
+
+            # Clean up temporary files
+            os.remove(merged_file_path)
+            return merged_data_df
+        else:
+            # If the file doesn't exist on S3, upload it as is
+            print(f"File doesn't exist on S3. Uploading the new file as is: {s3_file_path}")
+             # Save formatted data temporarily
+            formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{salecode}.csv")
+            formatted_df.to_csv(formatted_file_path, index=False)
+            
+            s3_client.upload_file(formatted_file_path, S3_BUCKET, s3_file_path)
+            print(f"New formatted file uploaded to S3: {s3_file_path}")
+
+            # Clean up temporary file
+            os.remove(formatted_file_path)
+            
+            return formatted_df
+    
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+        raise e
+
 def handle_file_upload(request):
     try:
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
-
+        
         print(request.files)
 
         file = request.files['file']
+        
         print("Filename:", file.filename)
 
         if file.filename == '':
             raise ValueError("No selected file")
 
+        # Ensure the file has an allowed extension (CSV or Excel)
         if file and allowed_file(file.filename):
+            # Use SALECODE as the filename (add .csv or .xlsx extension based on file type)
+            # filename = file.filename  # Use the original filename for now
+            # file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+            # Sanitize and generate a safe filename
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-            # Save the file temporarily
+                        # Save the file temporarily
             file.save(file_path)
 
-            # S3 upload path
-            s3_client = create_s3_client()
-            s3_file_path = f"horse_data/formatted_{filename}"
+            # Now upload the file to S3 using the assumed role credentials
+            s3_client = create_s3_client()  # Create the S3 client with assumed role credentials
+            s3_file_path = f"horse_data/{filename}"  # Path in S3
 
-            if check_existing_file_in_s3(s3_client, s3_file_path):
-                # If the file exists on S3, download it and proceed with merging
-                existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
+            # Upload the file to the S3 bucket
+            s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
+            print(f"File successfully uploaded to S3: {s3_file_path}")
 
-                # Read the uploaded file and the existing file into DataFrames
-                if file_path.endswith(".csv"):
-                    new_data_df = pd.read_csv(file_path)
-                elif file_path.endswith(".xlsx") or file_path.endswith(".xls"):
-                    new_data_df = pd.read_excel(file_path)
-
-                # Decode existing file from S3 and read into DataFrame
-                if filename.endswith('.csv'):
-                    existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
-                elif filename.endswith(('.xlsx', '.xls')):
-                    existing_data_df = pd.read_excel(BytesIO(existing_file_data))
-                else:
-                    raise ValueError("Unsupported file format.")
-
-                # Clean column names by stripping spaces
-                new_data_df.columns = new_data_df.columns.str.strip()
-                existing_data_df.columns = existing_data_df.columns.str.strip()
-
-                # Debug: Print columns and first few rows of existing data
-                print("Columns in existing data:", existing_data_df.columns)
-                print("First few rows of the existing file:")
-                print(existing_data_df.head())
-
-                # Check if required columns exist
-                required_columns = ['SALECODE', 'HIP']
-                if not all(col in new_data_df.columns for col in required_columns):
-                    raise ValueError(f"Required columns {required_columns} are missing in the uploaded file.")
-
-                if not all(col in existing_data_df.columns for col in required_columns):
-                    raise ValueError(f"Required columns {required_columns} are missing in the formatted file.")
-
-                # Set index and merge dataframes
-                existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
-                new_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
-
-                merged_data_df = new_data_df.combine_first(existing_data_df)
-                merged_data_df = merged_data_df.reset_index()
-
-                # Write merged data to a new file
-                merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{filename}")
-                merged_data_df.to_csv(merged_file_path, index=False)
-
-                # Upload merged file to S3
-                s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
-                print(f"File successfully uploaded to S3: {s3_file_path}")
-
-                # Clean up temporary files
-                os.remove(file_path)
-                os.remove(merged_file_path)
-            else:
-                # If the file doesn't exist on S3, upload it as is
-                print(f"File doesn't exist on S3. Uploading the new file as is: {s3_file_path}")
-                s3_client.upload_file(file_path, S3_BUCKET, s3_file_path)
-                print(f"New file uploaded to S3: {s3_file_path}")
-
-            # Clean up the uploaded file after processing
+            # Cleanup: Remove the temporary file after upload
             os.remove(file_path)
                         
             # You can save this URL in your database, if required for reference.
@@ -215,7 +234,7 @@ def handle_file_upload(request):
     except Exception as e:
         print(f"Error during file upload: {e}")
         raise e
-
+  
 # Check if the file exists on S3
 def check_existing_file_in_s3(s3_client, formatted_s3_file_path):
     try:
@@ -238,8 +257,103 @@ def download_existing_file_from_s3(s3_client, formatted_s3_file_path):
         print(f"Error downloading existing file from S3: {e}")
         raise e
 
-    
 def upload_data_to_mysql(df):
+    global csv_data
+    db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
+    db_name = "horse"
+    db_user = "preferredequine"
+    db_pass = "914MoniMaker77$$"
+
+    try:
+        print("1")
+        # Create a MySQL engine
+        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4", connect_args={"collation": "utf8mb4_general_ci"})
+
+        # Create a session factory
+        Session = sessionmaker(bind=engine)
+
+        # Create a new session
+        session = Session()
+
+        file = request.files['file']
+
+        # Extract the filename from the FileStorage object
+        filename = file.filename
+
+        # Get the base filename without extension (remove ".csv")
+        filename_without_extension = os.path.splitext(filename)[0]
+        print("2")
+        # Check if the file (based on SALECODE) already exists in the database
+        check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
+        result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename_without_extension}).fetchone()
+
+        if result_existing_file:
+            # File exists, delete previous records and the file from the system
+            delete_previous_records_sql = text("DELETE FROM documents WHERE file_name = :file_name")
+            session.execute(delete_previous_records_sql, {'file_name': filename_without_extension})
+            session.commit()
+
+            # Delete the previous file from the file system
+            for ext in ['.csv', '.xls', '.xlsx']:
+                previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ext)
+                if os.path.exists(previous_file_path):
+                    os.remove(previous_file_path)
+
+        # # Save the new file using the SALECODE as the filename (just a placeholder)
+        # with open(file_path, 'w') as f:
+        #     f.write("This is a placeholder file for SALECODE: " + sale_code)  # Example content
+
+        # Insert file details into the database (with the current timestamp)
+        insert_file_sql = text("""
+            INSERT INTO documents (file_name, upload_date)
+            VALUES (:file_name, NOW())
+        """)
+        session.execute(insert_file_sql, {'file_name': filename_without_extension})
+        session.commit()
+        print("3")
+
+        # Define tables
+        Base.metadata.create_all(engine)
+
+        # Define the relationship after both classes have been defined
+        # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
+
+        # Define the columns you want to insert into each table
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
+        columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
+
+        for _, row in df.iterrows():
+                    try:
+                        # Insert into tdamsire first
+                        tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
+                        tdamsire = main_Tdamsire(**tdamsire_data)
+                        session.add(tdamsire)
+
+                        # Use the generated DAMSIRE_ID in tsales
+                        tsales_data = {col: row[col] for col in columns_for_tsales}
+                        #tsales_data['DAMSIRE_ID'] = tdamsire.DAMSIRE_ID
+                        tsales = main_Tsales(**tsales_data)
+                        tsales.tdamsire = tdamsire
+                        session.add(tsales)
+
+                    except (MySQLError, Exception) as e:
+                        session.rollback()
+                        print(f"Error: {str(e)}")
+                        time.sleep(2)  # Wait for a few seconds before retrying
+                        continue
+
+        session.commit()  # Commit all changes
+        print("Data inserted successfully into both tsales and tdamsire tables.")
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        session.rollback()
+    finally:
+        session.close()
+    return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
+
+    
+def upload_data_to_mysql_keenland(df):
     global csv_data
     db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
     db_name = "horse"
@@ -396,18 +510,19 @@ def keenland():
         if file.filename == '':
             return render_template('keenland.html', message='No selected file')
 
-        file_name = handle_file_upload(request)  # This handles the file upload and returns the file path
-
-        s3_file_path = f"horse_data/{file_name}"
-
-        # Now download the file from S3 to process it
-        s3_client = create_s3_client()
-        temp_file_path = f"/tmp/{file_name}"
-
-        s3_client.download_file(S3_BUCKET, s3_file_path, temp_file_path)
+        # Save the uploaded file temporarily
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
         
-        # Now read the file (we assume CSV here)
-        df = pd.read_csv(temp_file_path)
+        # Read the uploaded file
+        if file_path.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        elif file_path.endswith(".xlsx") or file_path.endswith(".xls"):
+            df = pd.read_excel(file_path)
+        else:
+            os.remove(file_path)
+            return render_template('keenland.html', message='Unsupported file format')
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -896,18 +1011,15 @@ def keenland():
         print("reached here 1")
 
   # Save the formatted file back to the temporary location
-        formatted_file_path = f"/tmp/formatted_{file_name}"
-        df.to_csv(formatted_file_path, index=False)
+        formatted_df = handle_file_upload_keenland(request, df, salecode)
 
-        # Upload the formatted file back to S3
-        formatted_s3_path = f"horse_data/formatted_{file_name}"
-        s3_client.upload_file(formatted_file_path, S3_BUCKET, formatted_s3_path)
 
-        # Clean up the temporary files after upload
-        os.remove(temp_file_path)
-        os.remove(formatted_file_path)
-
-        upload_data_to_mysql(df)
+        # Upload to MySQL
+        upload_data_to_mysql_keenland(formatted_df)
+        
+        
+        # Clean up the original uploaded file
+        os.remove(file_path)
 
         # Engine.execute("COMMIT;") 
 
