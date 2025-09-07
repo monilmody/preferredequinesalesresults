@@ -425,7 +425,8 @@ def upload_data_to_mysql_keenland(df):
                         session.add(tdamsire)
                         session.flush()
                         
-                        print(f"Generated DAMSIRE_ID: {tdamsire.DAMSIRE_ID}")  # Debug
+                        damsire_id = tdamsire.DAMSIRE_ID
+                        print(f"Generated DAMSIRE_ID: {damsire_id}")  # Debug
                         
                         # Upsert tsales by SALECODE and HIP
                         salecode = row["SALECODE"]
@@ -439,7 +440,10 @@ def upload_data_to_mysql_keenland(df):
                                 # If the tsales record exists, just update it
                                 for k, v in tsales_data.items():
                                     setattr(tsales, k, v)
+                                
+                                tsales.DAMSIRE_ID = damsire_id
                             else:
+                                tsales_data['DAMSIRE_ID'] = damsire_id
                                 # If the tsales record does not exist, insert it
                                 tsales = main_Tsales(**tsales_data)
                                 session.add(tsales)
