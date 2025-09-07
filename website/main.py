@@ -79,7 +79,7 @@ class main_Tsales(Base):
     tSireofdam = Column(String(255))
     FARMNAME = Column(String(255))
     FARMCODE = Column(String(255))
-    DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
+    DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'), nullable=True)
     tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
 # Define the table schema for tdamsire
@@ -432,9 +432,6 @@ def upload_data_to_mysql_keenland(df):
                         hip = row["HIP"]
                         tsales_data = {col: row[col] for col in columns_for_tsales if col in row and pd.notnull(row[col])}
 
-                        # Add the relationship by setting DAMSIRE_ID
-                        tsales_data['DAMSIRE_ID'] = tdamsire.DAMSIRE_ID  # Use the auto-generated ID
-                        
                         try:
                             tsales = session.query(main_Tsales).filter_by(SALECODE=salecode, HIP=hip).first()
 
