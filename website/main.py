@@ -794,20 +794,25 @@ def keenland():
         elif 'Sire Of Dam' in df.columns:
             df['CSIREOFDAM'] = df['Sire Of Dam'].fillna("")
 
-        df['DAMOFDAM'] = df['DAMOFDAM'].fillna("")
+        # Adding a new column DAMOFDAM
+        damofdam = ''
+        df['DAMOFDAM'] = damofdam
 
         # Adding a new column CDAMOFDAM
-        df['CDAMOFDAM'] = df['CDAMOFDAM'].fillna("")
+        cdamofdam = ''
+        df['CDAMOFDAM'] = cdamofdam
 
         # Adding a new column DAMTATT
-        df['DAMTATT'] = df['DAMTATT'].fillna("")
+        damtatt = ''
+        df['DAMTATT'] = damtatt
 
         # Adding a new column DAMYOF
         damyof = 0
-        df['DAMYOF'] = df['DAMYOF'].fillna(0)
+        df['DAMYOF'] = damyof
 
         # Adding a new column DDAMTATT
-        df['DDAMTATT'] = df['DDAMTATT'].fillna("")
+        ddamtatt = ''
+        df['DDAMTATT'] = ddamtatt
         
         # Handle the 'CoveringSire' or 'Covering Sire' column and fill the 'BREDTO' column
         if 'CoveringSire' in df.columns:
@@ -831,7 +836,7 @@ def keenland():
         elif 'PropertyLine1' in df.columns:
             df['CONSLNAME'] = df['PropertyLine1']
         else:
-            df['CONSLNAME'] = ""
+            df['CONSLNAME'] = ''
 
         # Dropping a column PROPERTY LINE
         if 'PropertyLine1' in df.columns:
@@ -842,33 +847,33 @@ def keenland():
             df.drop(columns=['Farm Name'], inplace=True)
 
         # Adding a new column CONSNO
-        consno = ""
+        consno = ''
         df['CONSNO'] = consno
 
         # Adding a new column PEMCODE
-        pemcode = ""
+        pemcode = ''
         df['PEMCODE'] = pemcode
 
         # Adding a new column PURFNAME
-        purfname = ""
+        purfname = ''
         df['PURFNAME'] = purfname
 
         # Adding a new column PURLNAME
         if 'Purchaser' in df.columns:
             df['PURLNAME'] = df['Purchaser']
         else: 
-            df['PURLNAME'] = ""
+            df['PURLNAME'] = ''
 
         # Adding a new column SBCITY
-        sbcity = ""
+        sbcity = ''
         df['SBCITY'] = sbcity
 
         # Adding a new column SBSTATE
-        sbstate = ""
+        sbstate = ''
         df['SBSTATE'] = sbstate
 
         # Adding a new column SBCOUNTRY
-        sbcountry = ""
+        sbcountry = ''
         df['SBCOUNTRY'] = sbcountry
 
         # Ensure df is a valid DataFrame
@@ -923,19 +928,19 @@ def keenland():
         df['PRICE'] = pd.to_numeric(df['PRICE'], errors='coerce').fillna(0)
 
         # Adding a new column CURRENCY
-        currency = ""
+        currency = ''
         df['CURRENCY'] = currency
 
         # Adding a new column URL
-        url = ""
+        url = '' 
         df['URL'] = url
 
         # Adding a new column NFFM
-        nffm = ""
+        nffm = ''
         df['NFFM'] = nffm
 
         # Adding a new column PRIVATE SALE
-        privatesale = ""
+        privatesale = ''
         df['PRIVATESALE'] = privatesale
 
         # Adding a new column BREED
@@ -981,11 +986,11 @@ def keenland():
             df['tSireofdam'] = df['Sire Of Dam'].fillna("")
 
         # Adding a new column FARMNAME
-        farmname = ""
+        farmname = ''
         df['FARMNAME'] = farmname
 
         # Adding a new column FARMNAME
-        farmcode = ""
+        farmcode = ''
         df['FARMCODE'] = farmcode
 
         # Dropping columns Broodmare Sire and Sire Of Dam
