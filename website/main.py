@@ -17,7 +17,7 @@ from io import BytesIO, StringIO
 from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
 import logging
-from sqlalchemy import func
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 
 print(sys.executable)
@@ -118,7 +118,7 @@ def create_s3_client():
 def allowed_file(filename):
     """Check if the uploaded file is either a CSV or Excel file."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-    
+
 def handle_file_upload_keenland(request, formatted_df, salecode):
     try:
         # S3 upload path
@@ -417,22 +417,6 @@ def upload_data_to_mysql_keenland(df):
         columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
-
-        # Clean the entire DataFrame first to handle NaN values
-        def clean_dataframe(df):
-            # Define numeric and string columns
-            numeric_cols = ['DAMYOF', 'PRICE', 'AGE', 'YEARFOAL', 'UTT', 'BOOK', 'DAY', 'HIPNUM']
-            string_cols = [col for col in df.columns if col not in numeric_cols]
-            
-            # Replace NaN values
-            df = df.fillna({col: 0 for col in numeric_cols if col in df.columns})
-            df = df.fillna({col: '' for col in string_cols if col in df.columns})
-            
-            return df
-        
-        # Clean the DataFrame before processing
-        df = clean_dataframe(df)
-
         for _, row in df.iterrows():
                     try:
                         # Insert into tdamsire first
@@ -587,80 +571,28 @@ def keenland():
             df['BOOK'] = df['Book']
         else:
             df['BOOK'] = 1
-            
-        global csv_data
-        db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
-        db_name = "horse"
-        db_user = "preferredequine"
-        db_pass = "914MoniMaker77$$"
+        
+        # # Adding a new column DAY
+        # if 'SALEDATE' in df.columns:
+        df['DAY'] = df['Session']
+        
+        # Function to update sale dates based on user input
+        def update_sale_dates(df, sale_dates_input):
+            sale_dates = [date.strip() for date in sale_dates_input.split(',')]
+            # Convert the sale dates to datetime objects
+            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d').date() for date in sale_dates]
+            for i, sale_date_obj in enumerate(sale_date_objects):
+                day_increment = i + 1  # Increment the day by the index (starting from 1)
+                for j, day in enumerate(df['DAY']):
+                    if not pd.isnull(day):
+                        if day == day_increment:
+                            df.at[j, 'SALEDATE'] = sale_date_obj
 
-        try:
-            print("1-day")
-            # Create a MySQL engine
-            engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4", connect_args={"collation": "utf8mb4_general_ci"})
+        # Get sale dates from user input
+        sale_dates_input = request.form['sale_dates']
 
-            # Create a session factory
-            Session = sessionmaker(bind=engine)
-
-            # Create a new session
-            session = Session()
-            
-            def get_max_existing_day(salecode):
-
-                try:
-                    max_day = session.query(func.max(main_Tsales.DAY))\
-                                    .filter(main_Tsales.SALECODE == salecode)\
-                                    .scalar()
-                    return max_day if max_day is not None else 0
-                except Exception as e:
-                    print(f"Error fetching max existing day for SALECODE {salecode}: {e}")
-                    return 0
-                        
-            max_existing_day = get_max_existing_day(salecode)
-            print(f"Max existing DAY for {salecode}: {max_existing_day}")
-            
-            # # Adding a new column DAY
-            # if 'SALEDATE' in df.columns:
-            # Now adjust the DAY numbers in your current DataFrame
-            if 'Session' in df.columns:
-                df['DAY'] = df['Session'] + max_existing_day
-            else:
-                raise ValueError("The 'Session' column is missing from the dataframe.")
-
-            # Create SALEDATE column
-            df['SALEDATE'] = pd.NaT
-            
-            # Function to update sale dates based on user input
-            def update_sale_dates(df, sale_dates_input, day_offset=0):
-                # Validate sale dates input
-                if not sale_dates_input:
-                    raise ValueError("Sale dates input cannot be empty.")
-                sale_dates = [date.strip() for date in sale_dates_input.split(',')]
-                
-                # Convert the sale dates to datetime objects
-                try:
-                    sale_date_objects = [pd.to_datetime(date, format='%Y-%m-%d') for date in sale_dates]
-                except ValueError as e:
-                    raise ValueError(f"Invalid date format in input: {e}")
-                
-                for i, sale_date_obj in enumerate(sale_date_objects):
-                    day_increment = i + 1  + day_offset # Increment the day by the index (starting from 1)
-                    for j, day in enumerate(df['DAY']):
-                        if not pd.isnull(day):
-                            if day == day_increment:
-                                df.at[j, 'SALEDATE'] = sale_date_obj
-
-            # Get sale dates from user input
-            sale_dates_input = request.form['sale_dates']
-
-            # Update sale dates
-            update_sale_dates(df, sale_dates_input,day_offset=max_existing_day)
-        except Exception as e:
-            print(f"Error occurred: {e}")
-            return None  # or handle the error gracefully
-        finally:
-            session.close()
-            
+        # Update sale dates
+        update_sale_dates(df, sale_dates_input)
         print(df[['DAY', 'SALEDATE']])
 
         # Adding a new column HIP
