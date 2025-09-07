@@ -417,6 +417,22 @@ def upload_data_to_mysql_keenland(df):
         columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
+
+        # Clean the entire DataFrame first to handle NaN values
+        def clean_dataframe(df):
+            # Define numeric and string columns
+            numeric_cols = ['DAMYOF', 'PRICE', 'AGE', 'YEARFOAL', 'UTT', 'BOOK', 'DAY', 'HIPNUM']
+            string_cols = [col for col in df.columns if col not in numeric_cols]
+            
+            # Replace NaN values
+            df = df.fillna({col: 0 for col in numeric_cols if col in df.columns})
+            df = df.fillna({col: '' for col in string_cols if col in df.columns})
+            
+            return df
+        
+        # Clean the DataFrame before processing
+        df = clean_dataframe(df)
+
         for _, row in df.iterrows():
                     try:
                         # Insert into tdamsire first
