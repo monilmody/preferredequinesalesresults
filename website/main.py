@@ -621,7 +621,7 @@ def keenland():
         df['TATTOO'] = tattoo
 
         default_date = pd.to_datetime('1900-01-01').date()  # Choose your default date
-        df['DATEFOAL'] = pd.to_datetime(df['DOB'], errors='coerce').dt.date.fillna(default_date)
+        df['DATEFOAL'] = pd.to_datetime(df['DOB'], errors='coerce').fillna(default_date)
 
         # Function to calculate the age from DATEFOAL
         def calculate_age(datefoal):
