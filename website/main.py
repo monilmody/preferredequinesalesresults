@@ -145,12 +145,9 @@ def handle_file_upload(request):
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-                        # Save the file temporarily
-            file.save(file_path)
-
             # Now upload the file to S3 using the assumed role credentials
             s3_client = create_s3_client()  # Create the S3 client with assumed role credentials
-            s3_file_path = f"horse_data/{filename}"  # Path in S3
+            s3_file_path = f"horse_data/formatted_{filename}"  # Path in S3
 
             if check_existing_file_in_s3(s3_client, s3_file_path):
                 # If the file exists on S3, download it
@@ -210,9 +207,9 @@ def handle_file_upload(request):
         raise e
     
 # Check if the file exists on S3
-def check_existing_file_in_s3(s3_client, s3_file_path):
+def check_existing_file_in_s3(s3_client, formatted_s3_file_path):
     try:
-        s3_client.head_object(Bucket=S3_BUCKET, Key=s3_file_path)
+        s3_client.head_object(Bucket=S3_BUCKET, Key=formatted_s3_file_path)
         return True
     except s3_client.exceptions.ClientError as e:
         error_code = int(e.response['Error']['Code'])
@@ -222,11 +219,11 @@ def check_existing_file_in_s3(s3_client, s3_file_path):
             raise e
         
 # Download the existing file from S3
-def download_existing_file_from_s3(s3_client, s3_file_path):
+def download_existing_file_from_s3(s3_client, formatted_s3_file_path):
     try:
-        response = s3_client.get_object(Bucket=S3_BUCKET, Key=s3_file_path)
-        existing_file_data = response['Body'].read()
-        return existing_file_data
+        response = s3_client.get_object(Bucket=S3_BUCKET, Key=formatted_s3_file_path)
+        formatted_file_data = response['Body'].read().decode('utf-8')
+        return formatted_file_data
     except Exception as e:
         print(f"Error downloading existing file from S3: {e}")
         raise e
