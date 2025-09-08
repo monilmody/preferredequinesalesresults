@@ -119,72 +119,72 @@ def allowed_file(filename):
     """Check if the uploaded file is either a CSV or Excel file."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def handle_file_upload_keenland(request, formatted_df, salecode):
-    try:
-        # S3 upload path
-        s3_client = create_s3_client()
-        s3_file_path = f"horse_data/formatted_{salecode}.csv"
+# def handle_file_upload_keenland(request, formatted_df, salecode):
+#     try:
+#         # S3 upload path
+#         s3_client = create_s3_client()
+#         s3_file_path = f"horse_data/formatted_{salecode}.csv"
 
-        if check_existing_file_in_s3(s3_client, s3_file_path):
-            # If the file exists on S3, download it and proceed with merging
-            existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
+#         if check_existing_file_in_s3(s3_client, s3_file_path):
+#             # If the file exists on S3, download it and proceed with merging
+#             existing_file_data = download_existing_file_from_s3(s3_client, s3_file_path)
 
-            # Read the existing file from S3 into DataFrame
-            existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
+#             # Read the existing file from S3 into DataFrame
+#             existing_data_df = pd.read_csv(StringIO(existing_file_data.decode('utf-8')))
             
-            # Clean column names by stripping spaces
-            formatted_df.columns = formatted_df.columns.str.strip()
-            existing_data_df.columns = existing_data_df.columns.str.strip()
+#             # Clean column names by stripping spaces
+#             formatted_df.columns = formatted_df.columns.str.strip()
+#             existing_data_df.columns = existing_data_df.columns.str.strip()
 
-            # Debug: Print columns and first few rows of existing data
-            print("Columns in existing data:", existing_data_df.columns)
-            print("First few rows of the existing file:")
-            print(existing_data_df.head())
+#             # Debug: Print columns and first few rows of existing data
+#             print("Columns in existing data:", existing_data_df.columns)
+#             print("First few rows of the existing file:")
+#             print(existing_data_df.head())
 
-            # Check if required columns exist
-            required_columns = ['SALECODE', 'HIP']
-            if not all(col in formatted_df.columns for col in required_columns):
-                raise ValueError(f"Required columns {required_columns} are missing in the uploaded file.")
+#             # Check if required columns exist
+#             required_columns = ['SALECODE', 'HIP']
+#             if not all(col in formatted_df.columns for col in required_columns):
+#                 raise ValueError(f"Required columns {required_columns} are missing in the uploaded file.")
 
-            if not all(col in existing_data_df.columns for col in required_columns):
-                raise ValueError(f"Required columns {required_columns} are missing in the formatted file.")
+#             if not all(col in existing_data_df.columns for col in required_columns):
+#                 raise ValueError(f"Required columns {required_columns} are missing in the formatted file.")
 
-            # Set index and merge dataframes
-            existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
-            formatted_df.set_index(['SALECODE', 'HIP'], inplace=True)
+#             # Set index and merge dataframes
+#             existing_data_df.set_index(['SALECODE', 'HIP'], inplace=True)
+#             formatted_df.set_index(['SALECODE', 'HIP'], inplace=True)
 
-            merged_data_df = formatted_df.combine_first(existing_data_df)
-            merged_data_df = merged_data_df.reset_index()
+#             merged_data_df = formatted_df.combine_first(existing_data_df)
+#             merged_data_df = merged_data_df.reset_index()
 
-            # Write merged data to a new file
-            merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{salecode}")
-            merged_data_df.to_csv(merged_file_path, index=False)
+#             # Write merged data to a new file
+#             merged_file_path = os.path.join(UPLOAD_FOLDER, f"merged_{salecode}")
+#             merged_data_df.to_csv(merged_file_path, index=False)
 
-            # Upload merged file to S3
-            s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
-            print(f"File successfully uploaded to S3: {s3_file_path}")
+#             # Upload merged file to S3
+#             s3_client.upload_file(merged_file_path, S3_BUCKET, s3_file_path)
+#             print(f"File successfully uploaded to S3: {s3_file_path}")
 
-            # Clean up temporary files
-            os.remove(merged_file_path)
-            return merged_data_df
-        else:
-            # If the file doesn't exist on S3, upload it as is
-            print(f"File doesn't exist on S3. Uploading the new file as is: {s3_file_path}")
-             # Save formatted data temporarily
-            formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{salecode}.csv")
-            formatted_df.to_csv(formatted_file_path, index=False)
+#             # Clean up temporary files
+#             os.remove(merged_file_path)
+#             return merged_data_df
+#         else:
+#             # If the file doesn't exist on S3, upload it as is
+#             print(f"File doesn't exist on S3. Uploading the new file as is: {s3_file_path}")
+#              # Save formatted data temporarily
+#             formatted_file_path = os.path.join(UPLOAD_FOLDER, f"formatted_{salecode}.csv")
+#             formatted_df.to_csv(formatted_file_path, index=False)
             
-            s3_client.upload_file(formatted_file_path, S3_BUCKET, s3_file_path)
-            print(f"New formatted file uploaded to S3: {s3_file_path}")
+#             s3_client.upload_file(formatted_file_path, S3_BUCKET, s3_file_path)
+#             print(f"New formatted file uploaded to S3: {s3_file_path}")
 
-            # Clean up temporary file
-            os.remove(formatted_file_path)
+#             # Clean up temporary file
+#             os.remove(formatted_file_path)
             
-            return formatted_df
+#             return formatted_df
     
-    except Exception as e:
-        print(f"Error during file upload: {e}")
-        raise e
+#     except Exception as e:
+#         print(f"Error during file upload: {e}")
+#        raise e
 
 def handle_file_upload(request):
     try:
@@ -351,122 +351,122 @@ def upload_data_to_mysql(df):
     return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
 
     
-def upload_data_to_mysql_keenland(df):
-    global csv_data
-    db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
-    db_name = "horse"
-    db_user = "preferredequine"
-    db_pass = "914MoniMaker77$$"
+# def upload_data_to_mysql_keenland(df):
+#     global csv_data
+#     db_host = "preferredequinesalesresultsdatabase.cdq66kiey6co.us-east-1.rds.amazonaws.com"
+#     db_name = "horse"
+#     db_user = "preferredequine"
+#     db_pass = "914MoniMaker77$$"
 
-    try:
-        print("1")
-        # Create a MySQL engine
-        engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4", connect_args={"collation": "utf8mb4_general_ci"})
+#     try:
+#         print("1")
+#         # Create a MySQL engine
+#         engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4", connect_args={"collation": "utf8mb4_general_ci"})
 
-        # Create a session factory
-        Session = sessionmaker(bind=engine)
+#         # Create a session factory
+#         Session = sessionmaker(bind=engine)
 
-        # Create a new session
-        session = Session()
+#         # Create a new session
+#         session = Session()
 
-        file = request.files['file']
+#         file = request.files['file']
 
-        # Extract the filename from the FileStorage object
-        filename = file.filename
+#         # Extract the filename from the FileStorage object
+#         filename = file.filename
 
-        # Get the base filename without extension (remove ".csv")
-        filename_without_extension = os.path.splitext(filename)[0]
-        print("2")
-        # Check if the file (based on SALECODE) already exists in the database
-        check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
-        result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename_without_extension}).fetchone()
+#         # Get the base filename without extension (remove ".csv")
+#         filename_without_extension = os.path.splitext(filename)[0]
+#         print("2")
+#         # Check if the file (based on SALECODE) already exists in the database
+#         check_existing_file_sql = text("SELECT file_name FROM documents WHERE file_name = :file_name")
+#         result_existing_file = session.execute(check_existing_file_sql, {'file_name': filename_without_extension}).fetchone()
 
-        if result_existing_file:
-            # File exists, delete previous records and the file from the system
-            update_previous_records_sql = text("UPDATE documents SET upload_date = NOW() WHERE file_name = :file_name")
-            session.execute(update_previous_records_sql, {'file_name': filename_without_extension})
-            session.commit()
-        else:
-            insert_file_sql = text("""
-                INSERT INTO documents (file_name, upload_date)
-                VALUES (:file_name, NOW())
-            """)
-            session.execute(insert_file_sql, {'file_name': filename_without_extension})
-            session.commit()
+#         if result_existing_file:
+#             # File exists, delete previous records and the file from the system
+#             update_previous_records_sql = text("UPDATE documents SET upload_date = NOW() WHERE file_name = :file_name")
+#             session.execute(update_previous_records_sql, {'file_name': filename_without_extension})
+#             session.commit()
+#         else:
+#             insert_file_sql = text("""
+#                 INSERT INTO documents (file_name, upload_date)
+#                 VALUES (:file_name, NOW())
+#             """)
+#             session.execute(insert_file_sql, {'file_name': filename_without_extension})
+#             session.commit()
 
-            # # Delete the previous file from the file system
-            # for ext in ['.csv', '.xls', '.xlsx']:
-            #     previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ext)
-            #     if os.path.exists(previous_file_path):
-            #         os.remove(previous_file_path)
+#             # # Delete the previous file from the file system
+#             # for ext in ['.csv', '.xls', '.xlsx']:
+#             #     previous_file_path = os.path.join(UPLOAD_FOLDER, result_existing_file[0] + ext)
+#             #     if os.path.exists(previous_file_path):
+#             #         os.remove(previous_file_path)
 
-        # # Save the new file using the SALECODE as the filename (just a placeholder)
-        # with open(file_path, 'w') as f:
-        #     f.write("This is a placeholder file for SALECODE: " + sale_code)  # Example content
+#         # # Save the new file using the SALECODE as the filename (just a placeholder)
+#         # with open(file_path, 'w') as f:
+#         #     f.write("This is a placeholder file for SALECODE: " + sale_code)  # Example content
 
-        # Insert file details into the database (with the current timestamp)
-        print("3")
+#         # Insert file details into the database (with the current timestamp)
+#         print("3")
 
-        # Define tables
-        Base.metadata.create_all(engine)
+#         # Define tables
+#         Base.metadata.create_all(engine)
 
-        # Define the relationship after both classes have been defined
-        # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
+#         # Define the relationship after both classes have been defined
+#         # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
-        # Define the columns you want to insert into each table
-        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
-        columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
+#         # Define the columns you want to insert into each table
+#         columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
+#         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
-        for _, row in df.iterrows():
-                    try:
-                        # Insert into tdamsire first
-                        tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
-                        tdamsire = main_Tdamsire(**tdamsire_data)
-                        session.add(tdamsire)
-                        session.flush()
+#         for _, row in df.iterrows():
+#                     try:
+#                         # Insert into tdamsire first
+#                         tdamsire_data = {col: row[col] for col in columns_for_tdamsire}
+#                         tdamsire = main_Tdamsire(**tdamsire_data)
+#                         session.add(tdamsire)
+#                         session.flush()
                         
-                        damsire_id = tdamsire.DAMSIRE_ID
+#                         damsire_id = tdamsire.DAMSIRE_ID
                         
-                        # Upsert tsales by SALECODE and HIP
-                        salecode = row["SALECODE"]
-                        hip = row["HIP"]
-                        tsales_data = {col: row[col] for col in columns_for_tsales if col in row and pd.notnull(row[col])}
+#                         # Upsert tsales by SALECODE and HIP
+#                         salecode = row["SALECODE"]
+#                         hip = row["HIP"]
+#                         tsales_data = {col: row[col] for col in columns_for_tsales if col in row and pd.notnull(row[col])}
 
-                        try:
-                            tsales = session.query(main_Tsales).filter_by(SALECODE=salecode, HIP=hip).first()
+#                         try:
+#                             tsales = session.query(main_Tsales).filter_by(SALECODE=salecode, HIP=hip).first()
 
-                            if tsales:
-                                # If the tsales record exists, just update it
-                                for k, v in tsales_data.items():
-                                    setattr(tsales, k, v)
+#                             if tsales:
+#                                 # If the tsales record exists, just update it
+#                                 for k, v in tsales_data.items():
+#                                     setattr(tsales, k, v)
                                 
-                                tsales.DAMSIRE_ID = damsire_id
-                            else:
-                                tsales_data['DAMSIRE_ID'] = damsire_id
-                                # If the tsales record does not exist, insert it
-                                tsales = main_Tsales(**tsales_data)
-                                session.add(tsales)
+#                                 tsales.DAMSIRE_ID = damsire_id
+#                             else:
+#                                 tsales_data['DAMSIRE_ID'] = damsire_id
+#                                 # If the tsales record does not exist, insert it
+#                                 tsales = main_Tsales(**tsales_data)
+#                                 session.add(tsales)
 
-                        except IntegrityError as e:
-                            session.rollback()
-                            print(f"IntegrityError: {e.orig}")
-                            # Handle error (maybe log or return a specific message)
+#                         except IntegrityError as e:
+#                             session.rollback()
+#                             print(f"IntegrityError: {e.orig}")
+#                             # Handle error (maybe log or return a specific message)
 
-                    except (MySQLError, Exception) as e:
-                        session.rollback()
-                        print(f"Error: {str(e)}")
-                        time.sleep(2)  # Wait for a few seconds before retrying
-                        continue
+#                     except (MySQLError, Exception) as e:
+#                         session.rollback()
+#                         print(f"Error: {str(e)}")
+#                         time.sleep(2)  # Wait for a few seconds before retrying
+#                         continue
 
-        session.commit()  # Commit all changes
-        print("Data inserted successfully into both tsales and tdamsire tables.")
+#         session.commit()  # Commit all changes
+#         print("Data inserted successfully into both tsales and tdamsire tables.")
 
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        session.rollback()
-    finally:
-        session.close()
-    return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
+    # except Exception as e:
+    #     print(f"Error: {str(e)}")
+    #     session.rollback()
+    # finally:
+    #     session.close()
+    # return render_template("keenland.html", message=f'Data has been uploaded to the database successfully', data=df.to_html())
 
 @app.route("/")
 def home():
@@ -579,7 +579,7 @@ def keenland():
         def update_sale_dates(df, sale_dates_input):
             sale_dates = [date.strip() for date in sale_dates_input.split(',')]
             # Convert the sale dates to datetime objects
-            sale_date_objects = [datetime.strptime(date, '%Y-%m-%d').date() for date in sale_dates]
+            sale_date_objects = [pd.to_datetime(date, format='%Y-%m-%d') for date in sale_dates]
             for i, sale_date_obj in enumerate(sale_date_objects):
                 day_increment = i + 1  # Increment the day by the index (starting from 1)
                 for j, day in enumerate(df['DAY']):
@@ -623,13 +623,14 @@ def keenland():
         tattoo = ''
         df['TATTOO'] = tattoo
 
-        default_date = pd.to_datetime('1900-01-01').date()  # Choose your default date
+        default_date = pd.to_datetime('1900-01-01')  # Choose your default date
         df['DATEFOAL'] = pd.to_datetime(df['DOB'], errors='coerce').fillna(default_date)
 
         # Function to calculate the age from DATEFOAL
         def calculate_age(datefoal):
-            today = date.today()
-            born = pd.to_datetime(datefoal, errors='coerce')  # Convert to datetime, handle invalid dates
+            today = pd.Timestamp.now()
+            born = pd.to_datetime(datefoal, errors='coerce')
+            # Calculate age properly
             age = today.year - born.dt.year - ((today.month * 100 + today.day) < (born.dt.month * 100 + born.dt.day))
             return age
 
@@ -775,7 +776,7 @@ def keenland():
         if 'LastService' in df.columns:
             df['LASTBRED'] = pd.to_datetime(df['LastService']).fillna(pd.to_datetime("1901-01-01"))
         else:
-            df['LASTBRED'] = pd.to_datetime("1901-01-01").date()
+            df['LASTBRED'] = pd.to_datetime("1901-01-01")
             
         # Adding a new column CONLNAME
         if 'Consignor' in df.columns:
@@ -897,7 +898,7 @@ def keenland():
         # Assuming df is your DataFrame
         if 'DOB' in df.columns:
             # Extracting year from DATEFOAL
-            df['YEARFOAL'] = df['DATEFOAL'].dt.year
+            df['YEARFOAL'] = df['DATEFOAL'].dt.year.fillna(0).astype(int)
             # If 'yearfoal' input from HTML has values, prioritize it over DATEFOAL
             if 'yearfoal' in request.form and request.form['yearfoal']:
                 yearfoal_value = request.form['yearfoal']
