@@ -514,19 +514,18 @@ def keenland():
         if file.filename == '':
             return render_template('keenland.html', message='No selected file')
 
-        # Save the uploaded file temporarily
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(file_path)
-        
-        # Read the uploaded file
-        if file_path.endswith(".csv"):
-            df = pd.read_csv(file_path)
-        elif file_path.endswith(".xlsx") or file_path.endswith(".xls"):
-            df = pd.read_excel(file_path)
-        else:
-            os.remove(file_path)
-            return render_template('keenland.html', message='Unsupported file format')
+        file_path = handle_file_upload(request)  # This handles the file upload and returns the file path
+
+        s3_file_path = f"horse_data/{file_path}"
+
+        # Now download the file from S3 to process it
+        s3_client = create_s3_client()
+        temp_file_path = f"/tmp/{file_path}"
+
+        s3_client.download_file(S3_BUCKET, s3_file_path, temp_file_path)
+
+        # Read the selected Excel file into a DataFrame
+        df = pd.read_csv(temp_file_path)
 
         # Prompt the user to insert the salecode using a dialog
         salecode = request.form['salecode']
@@ -1017,17 +1016,21 @@ def keenland():
             df.drop(columns=['Breeders Cup Eligible'], inplace=True)
             
         print("reached here 1")
+        
+                # Save the formatted file back to the server
+        formatted_file_path = f"/tmp/formatted_{file_path}"
+        df.to_csv(formatted_file_path, index=False)
 
-  # Save the formatted file back to the temporary location
-        formatted_df = handle_file_upload_keenland(request, df, salecode)
+        # Upload the formatted file back to S3
+        formatted_s3_path = f"horse_data/formatted_{file_path}"
+        s3_client.upload_file(formatted_file_path, S3_BUCKET, formatted_s3_path)
 
+        # Clean up the temporary files after upload
+        os.remove(temp_file_path)
+        os.remove(formatted_file_path)
 
         # Upload to MySQL
-        upload_data_to_mysql_keenland(formatted_df)
-        
-        
-        # Clean up the original uploaded file
-        os.remove(file_path)
+        upload_data_to_mysql(df)
 
         # Engine.execute("COMMIT;") 
 
