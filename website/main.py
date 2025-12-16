@@ -1415,7 +1415,7 @@ def fasigTipton():
 
         # Adding a new column PURLNAME
         purlname = df['PURCHASER']
-        df['PURLNAME'] = purlname
+        df['PURLNAME'] = purlname.fillna('')
 
         # Dropping a column PURCHASER
         df.drop(columns=['PURCHASER'], inplace=True)
