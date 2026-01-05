@@ -19,6 +19,7 @@ from botocore.exceptions import ClientError
 import logging
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import IntegrityError
+import re
 
 print(sys.executable)
 
@@ -857,45 +858,63 @@ def keenland():
         price_mapping = {
             '---': np.nan
         }
-        
+
         # Step 1: Check if 'Price' exists, otherwise handle missing prices
         if 'Price' in df.columns:
             # Convert 'Price' to numeric and handle missing values
             df['PRICE'] = pd.to_numeric(df['Price'], errors='coerce').fillna(0)  # Fill NaNs with 0
-
-            rna_price = 0  # Initialize rna_price with 0 (default value)
-
-            # Process each row to handle missing prices and 'R.N.A.'
-            for i, row in df.iterrows():
-                if row['PRICE'] == 0 and 'R.N.A.' in row['Purchaser']:
-                    # Extract the price from R.N.A. entry
-                    match = re.search(r'\(([\d,]+)\)', row['Purchaser'])
-                    if match:
-                        try:
-                            rna_price = float(match.group(1).replace(',', ''))
-                            # Set the PRICE for the current row to the extracted rna_price
-                            df.at[i, 'PRICE'] = rna_price
-                        except ValueError:
-                            print(f"Failed to convert R.N.A. price to float: {match.group(1)} from row {i}")
-                            # If conversion fails, keep rna_price as 0
-                            rna_price = 0
-                    else:
-                        print(f"Failed to extract R.N.A. price from: {row['Purchaser']} in row {i}")
-
-                elif row['PRICE'] == 0:
-                    # If PRICE is still 0, fill with the last valid rna_price
-                    df.at[i, 'PRICE'] = rna_price
         else:
-            # If 'Price' does not exist, create an empty 'PRICE' column and fill with 0
             df['PRICE'] = 0
+
+        # Only process R.N.A. if Purchaser column exists and has data
+        if 'Purchaser' in df.columns:
+            # Convert to string safely - handle ALL NaN values
+            df['Purchaser'] = df['Purchaser'].fillna('').astype(str)
+            
+            # Check if we have any non-empty Purchaser values
+            has_purchaser_data = (df['Purchaser'].str.strip() != '').any()
+            
+            if has_purchaser_data:
+                # Create a function to extract R.N.A. price
+                def extract_rna_price(purchaser_str):
+                    if not purchaser_str:
+                        return None
+                    
+                    # Case-insensitive check for R.N.A. patterns
+                    # Common patterns: "R.N.A.", "RNA", "(R.N.A.)", "[RNA]", etc.
+                    rna_patterns = [
+                        r'R\.?N\.?A\.?.*?\(([\d,]+)\)',  # R.N.A. (100,000)
+                        r'R\.?N\.?A\.?.*?\[([\d,]+)\]',  # R.N.A. [100,000]
+                        r'R\.?N\.?A\.?.*?([\d,]+)',       # R.N.A. 100,000
+                        r'Not Sold.*?\(([\d,]+)\)',       # Not Sold (100,000)
+                        r'Withdrawn.*?\(([\d,]+)\)'       # Withdrawn (100,000)
+                    ]
+                    
+                    for pattern in rna_patterns:
+                        match = re.search(pattern, purchaser_str, re.IGNORECASE)
+                        if match:
+                            try:
+                                return float(match.group(1).replace(',', ''))
+                            except (ValueError, AttributeError):
+                                continue
+                    return None
+                
+                # Apply function to all rows
+                rna_prices = df['Purchaser'].apply(extract_rna_price)
+                
+                # Update PRICE where R.N.A. price was found
+                rna_mask = rna_prices.notna()
+                if rna_mask.any():
+                    df.loc[rna_mask, 'PRICE'] = rna_prices[rna_mask]
 
         # Drop the original 'Price' column if it exists
         if 'Price' in df.columns:
             df.drop(columns=['Price'], inplace=True)
 
-        # Ensure that the 'PRICE' column is numeric (for further processing if needed)
+        # Final cleanup: Ensure PRICE is numeric and non-negative
         df['PRICE'] = pd.to_numeric(df['PRICE'], errors='coerce').fillna(0)
-
+        df['PRICE'] = df['PRICE'].clip(lower=0)  # Ensure no negative prices
+        
         # Adding a new column CURRENCY
         currency = ''
         df['CURRENCY'] = currency
