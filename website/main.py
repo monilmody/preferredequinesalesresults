@@ -675,8 +675,16 @@ def keenland():
             'BLACK': 'BLK'
         }
 
-        # Adding a new column COLOR
-        df['COLOR'] = df['Color'].replace(color_mapping)
+        # Adding a new column COLOR - FIXED VERSION
+        if 'Color' in df.columns:
+            # Fill NaN values with empty string first
+            df['Color'] = df['Color'].fillna('')
+            # Convert to string to ensure all values are strings
+            df['Color'] = df['Color'].astype(str)
+            # Now apply the mapping
+            df['COLOR'] = df['Color'].replace(color_mapping)
+        else:
+            df['COLOR'] = ''
 
         sex_mapping = {
             'Colt': 'C',
@@ -830,6 +838,7 @@ def keenland():
 
         # Adding a new column PURLNAME
         if 'Purchaser' in df.columns:
+            df['Purchaser'] = df['Purchaser'].fillna('').astype(str)
             df['PURLNAME'] = df['Purchaser']
         else: 
             df['PURLNAME'] = ''
