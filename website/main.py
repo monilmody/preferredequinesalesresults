@@ -77,6 +77,9 @@ class main_Tsales(Base):
     tSireofdam = Column(String(255))
     FARMNAME = Column(String(255))
     FARMCODE = Column(String(255))
+    salebarn = Column(String(255))
+    salesection = Column(String(255))
+    salestall = Column(String(255))
     DAMSIRE_ID = Column(Integer, ForeignKey('tdamsire.DAMSIRE_ID'))
     tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
@@ -317,7 +320,7 @@ def upload_data_to_mysql(df):
         # main_Tsales.tdamsire = relationship("main_Tdamsire", back_populates="tsales")
 
         # Define the columns you want to insert into each table
-        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE"]
+        columns_for_tsales = ["SALEYEAR", "SALETYPE", "SALECODE", "SALEDATE", "BOOK", "DAY", "HIP", "HIPNUM", "HORSE", "CHORSE", "RATING", "TATTOO", "DATEFOAL", "AGE", "COLOR", "SEX", "GAIT", "TYPE", "RECORD", "ET", "ELIG", "BREDTO", "LASTBRED", "CONSLNAME", "CONSNO", "PEMCODE", "PURFNAME", "PURLNAME", "SBCITY", "SBSTATE", "SBCOUNTRY", "PRICE", "CURRENCY", "URL", "NFFM", "PRIVATESALE", "BREED", "YEARFOAL", "UTT", "STATUS", "TDAM", "tSire", "tSireofdam", "FARMNAME", "FARMCODE", "salebarn", "salesection", "salestall"]
         columns_for_tdamsire = ["SIRE", "CSIRE", "DAM", "CDAM", "SIREOFDAM", "CSIREOFDAM", "DAMOFDAM", "CDAMOFDAM", "DAMTATT", "DAMYOF", "DDAMTATT"]
 
         for _, row in df.iterrows():
@@ -614,7 +617,25 @@ def keenland():
         if 'Horse Name' in df.columns:
                     # Dropping a column NAME
                     df.drop(columns=['Horse Name'], inplace=True)
+                    
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
 
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
+            
         # Adding a new column RATING
         rating = ''
         df['RATING'] = rating
@@ -1207,6 +1228,24 @@ def fasigTipton():
         # Adding a new column TATTOO
         tattoo = ''
         df['TATTOO'] = tattoo
+        
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
+
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
 
         # Adding a new column DATEFOAL
         if 'YEAR OF BIRTH' in df.columns:
@@ -1662,6 +1701,25 @@ def goffs():
         # Adding a new column TATTOO
         tattoo = ''
         df['TATTOO'] = tattoo
+        
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
+
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
+            
 
         # Adding a new column LASTBRED
         datefoal = '1901-01-01'
@@ -2036,6 +2094,24 @@ def obs():
         # Adding a new column TATTOO
         tattoo = ''
         df['TATTOO'] = tattoo
+        
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
+
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
 
         # Adding a new column DATEFOAL
         df['DATEFOAL'] = pd.to_datetime(df['foaling_date'])
@@ -2408,6 +2484,24 @@ def obs_old():
         # Adding a new column TATTOO
         tattoo = ''
         df['TATTOO'] = tattoo
+        
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
+
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
 
         if 'Foaling Date' in df.columns:
             df['DATEFOAL'] = pd.to_datetime(df['Foaling Date'])
@@ -2845,6 +2939,24 @@ def tattersalls():
         # Adding a new column TATTOO
         tattoo = ''
         df['TATTOO'] = tattoo
+        
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
+
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
 
         # Adding a new column DATEFOAL
         if 'Date Foaled' in df.columns:
@@ -3220,6 +3332,24 @@ def arquana():
         # Adding a new column TATTOO
         tattoo = ''
         df['TATTOO'] = tattoo
+        
+        if "Barn" in df.columns:
+            df['salebarn'] = df['Barn'].fillna("")
+            df.drop(columns=['Barn'], inplace=True)
+        else:
+            df['salebarn'] = ""  # Create column with empty string if "Barn" doesn't exist
+
+        if "Section" in df.columns:
+            df['salesection'] = df['Section'].fillna("")
+            df.drop(columns=['Section'], inplace=True)
+        else:
+            df['salesection'] = ""  # Create column with empty string if "Section" doesn't exist
+            
+        if "Stall" in df.columns:
+            df['salestall'] = df['Stall'].fillna("")
+            df.drop(columns=['Stall'], inplace=True)
+        else:
+            df['salestall'] = ""  # Create column with empty string if "Stall" doesn't exist
 
         # Adding a new column DATEFOAL
         datefoal = df['Date de naissance']
