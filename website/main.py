@@ -2283,7 +2283,7 @@ def obs():
 
         # Adding a new column PURLNAME
         purlname = df['buyer_name']
-        df['PURLNAME'] = purlname
+        df['PURLNAME'] = purlname.fillna("")
 
         # Dropping a column PURCHASER
         df.drop(columns=['buyer_name'], inplace=True)
